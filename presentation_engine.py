@@ -345,13 +345,24 @@ Return ONLY the JSON array, no explanations or markdown formatting.
             else:
                 raise Exception(f"Unexpected JSON structure type: {type(slide_plan)}")
             
-            # Load the presentation
+            # Load the uploaded presentation to preserve themes, layouts, and formatting
             prs = Presentation(filepath)
+            logger.info(f"Loaded uploaded presentation: {filepath}")
+            logger.info(f"Original presentation has {len(prs.slides)} slides")
             
-            # Clear existing slides using safer approach
-            # Create a new presentation to avoid XML conflicts
-            from pptx import Presentation as NewPresentation
-            prs = NewPresentation()  # Start with a fresh presentation
+            # Clear existing slides using the simplest approach - create new presentation but copy theme
+            # Save the slide masters and layouts from the original presentation
+            original_slide_masters = prs.slide_masters
+            original_slide_layouts = [layout for master in original_slide_masters for layout in master.slide_layouts]
+            
+            # For now, use a safer approach: just delete slides in reverse order
+            slides_to_remove = list(prs.slides)
+            for slide in reversed(slides_to_remove):
+                slide_rId = slide.rId
+                prs.part.drop_rel(slide_rId)
+            
+            # Clear the slide ID list
+            prs.slides._sldIdLst.clear()
             
             # Build each slide from the plan
             for slide_idx, slide_data in enumerate(slide_plan):
@@ -361,7 +372,16 @@ Return ONLY the JSON array, no explanations or markdown formatting.
                         continue
                     
                     logger.info(f"Building slide {slide_idx + 1}: {slide_data.get('title', 'No title')}")
-                    slide_layout = prs.slide_layouts[5]  # Blank layout
+                    
+                    # Use a blank layout from the original presentation (try different indices for safety)
+                    try:
+                        slide_layout = prs.slide_layouts[5]  # Blank layout (common)
+                    except IndexError:
+                        try:
+                            slide_layout = prs.slide_layouts[6]  # Sometimes blank is at index 6
+                        except IndexError:
+                            slide_layout = prs.slide_layouts[0]  # Fallback to first available layout
+                    
                     slide = prs.slides.add_slide(slide_layout)
                     
                 except Exception as e:
