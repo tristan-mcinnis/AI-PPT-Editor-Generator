@@ -105,6 +105,49 @@ def get_ollama_models():
             'success': False
         }), 500
 
+@app.route('/api/ollama/test', methods=['POST'])
+def test_ollama():
+    """Test Ollama connection with a simple request."""
+    try:
+        data = request.json
+        model = data.get('model', 'qwen3:latest')
+        
+        ollama_host = os.environ.get('OLLAMA_HOST', 'http://localhost:11434')
+        
+        logger.info(f"Testing Ollama with model: {model}")
+        
+        test_response = requests.post(
+            f"{ollama_host}/api/generate",
+            json={
+                "model": model,
+                "prompt": "Hello, respond with 'OK'",
+                "stream": False,
+                "options": {
+                    "num_predict": 10
+                }
+            },
+            timeout=30
+        )
+        
+        logger.info(f"Test response status: {test_response.status_code}")
+        test_response.raise_for_status()
+        
+        result = test_response.json()
+        logger.info(f"Test response: {result}")
+        
+        return jsonify({
+            'success': True,
+            'response': result.get('response', ''),
+            'message': 'Ollama is working correctly'
+        })
+        
+    except Exception as e:
+        logger.error(f"Ollama test failed: {str(e)}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 @app.route('/api/upload/presentation', methods=['POST'])
 def upload_presentation():
     try:

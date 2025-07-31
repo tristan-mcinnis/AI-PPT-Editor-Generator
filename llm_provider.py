@@ -86,34 +86,53 @@ class OllamaProvider(LLMProvider):
             # For longer prompts, use a longer timeout and warn up the model
             estimated_timeout = min(max(60, len(full_prompt) // 100), 180)  # 60-180 seconds based on prompt length
             
+            logger.info(f"Starting Ollama request - Model: {self.model}, Prompt length: {len(full_prompt)}, Timeout: {estimated_timeout}s")
+            
             # Try to warm up the model first for better response times
             if len(full_prompt) > 500:
                 logger.info(f"Warming up Ollama model {self.model}...")
-                self._warm_up_model()
+                warm_up_success = self._warm_up_model()
+                logger.info(f"Warm-up result: {'Success' if warm_up_success else 'Failed'}")
             
-            logger.info(f"Generating response with Ollama model '{self.model}' (timeout: {estimated_timeout}s)")
+            # Prepare the request
+            request_data = {
+                "model": self.model,
+                "prompt": full_prompt,
+                "stream": False,
+                "options": {
+                    "temperature": 0.7,
+                    "num_predict": 3000,
+                    "top_k": 40,
+                    "top_p": 0.9
+                }
+            }
+            
+            logger.info(f"Making Ollama API request to {self.host}/api/generate")
+            logger.info(f"Request data: model={self.model}, stream=False, num_predict=3000")
+            
             response = requests.post(
                 f"{self.host}/api/generate",
-                json={
-                    "model": self.model,
-                    "prompt": full_prompt,
-                    "stream": False,
-                    "options": {
-                        "temperature": 0.7,
-                        "num_predict": 3000,  # Increased for longer responses
-                        "top_k": 40,
-                        "top_p": 0.9
-                    }
-                },
-                timeout=estimated_timeout
+                json=request_data,
+                timeout=estimated_timeout,
+                headers={'Content-Type': 'application/json'}
             )
+            
+            logger.info(f"Received response with status code: {response.status_code}")
+            
             response.raise_for_status()
             result = response.json()
             
+            logger.info(f"Response keys: {list(result.keys())}")
+            
             if 'response' not in result:
+                logger.error(f"Invalid response format from Ollama: {result}")
                 raise Exception(f"Invalid response format from Ollama: {result}")
+            
+            response_text = result['response']
+            logger.info(f"Generated response length: {len(response_text)}")
+            logger.info(f"Response preview: {response_text[:200]}...")
                 
-            return result['response']
+            return response_text
             
         except requests.exceptions.Timeout:
             raise Exception(f"Ollama request timed out after {estimated_timeout}s. Try using a smaller/faster model or reduce your content length.")

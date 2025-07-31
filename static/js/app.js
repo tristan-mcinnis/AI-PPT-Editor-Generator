@@ -37,6 +37,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const providerStatus = document.getElementById('provider-status');
     const ollamaModelSection = document.getElementById('ollama-model-section');
     const ollamaModelSelect = document.getElementById('ollama-model');
+    const testOllamaBtn = document.getElementById('test-ollama-btn');
 
     // Check if critical elements exist
     console.log('Build button found:', !!buildPresentationBtn);
@@ -726,6 +727,43 @@ document.addEventListener('DOMContentLoaded', function() {
             selectedOllamaModel = event.target.value;
             localStorage.setItem('ollamaModel', selectedOllamaModel);
             addConsoleMessage(`✅ Selected Ollama model: ${selectedOllamaModel}`, 'info');
+        });
+    }
+
+    // Handle Ollama test
+    if (testOllamaBtn) {
+        testOllamaBtn.addEventListener('click', async () => {
+            if (!selectedOllamaModel) {
+                addConsoleMessage('❌ Please select an Ollama model first', 'error');
+                return;
+            }
+            
+            try {
+                testOllamaBtn.textContent = 'Testing...';
+                testOllamaBtn.disabled = true;
+                
+                addConsoleMessage(`🧪 Testing Ollama model: ${selectedOllamaModel}`, 'info');
+                
+                const response = await fetch('/api/ollama/test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ model: selectedOllamaModel })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    addConsoleMessage(`✅ Ollama test successful! Response: "${data.response}"`, 'info');
+                } else {
+                    addConsoleMessage(`❌ Ollama test failed: ${data.error}`, 'error');
+                }
+                
+            } catch (error) {
+                addConsoleMessage(`❌ Ollama test error: ${error.message}`, 'error');
+            } finally {
+                testOllamaBtn.textContent = 'Test Ollama';
+                testOllamaBtn.disabled = false;
+            }
         });
     }
 
