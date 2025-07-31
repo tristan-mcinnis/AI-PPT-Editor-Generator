@@ -300,8 +300,26 @@ class AnthropicProvider(LLMProvider):
 
     def generate_response(self, prompt: str) -> str:
         try:
-            # Add system prompt to the user message for Anthropic
-            enhanced_prompt = "You are a helpful assistant specializing in presentation creation and editing. When asked to generate presentation plans, always return valid JSON.\n\n" + prompt
+            # Add system prompt to the user message for Anthropic - use same detailed JSON instructions as Ollama
+            system_prompt = """Return a JSON array of ALL slides from the structured text.
+
+Format: [{"slide_number": 1, "title": "Title", "content_blocks": [{"type": "bullets", "items": ["Item 1"]}]}]
+
+Content block types:
+- bullets: {"type": "bullets", "items": ["Point 1", "Point 2"]}
+- text: {"type": "text", "text": "Paragraph content"}  
+- content_box: {"type": "content_box", "title": "Box Title", "items": ["Item 1"]}
+
+CRITICAL RULES:
+1. Start with [ end with ]
+2. Include ALL slides  
+3. NO duplicate content blocks per slide
+4. Use content_box for grouped information with titles
+5. Use bullets for simple lists
+6. Keep content concise and organized
+7. MUST be valid JSON - check all commas, brackets, and quotes"""
+            
+            enhanced_prompt = system_prompt + "\n\n" + prompt
             
             response = self.client.messages.create(
                 model=self.model,
@@ -311,7 +329,12 @@ class AnthropicProvider(LLMProvider):
                     {"role": "user", "content": enhanced_prompt}
                 ]
             )
-            return response.content[0].text
+            
+            # Extract JSON from response (same as Ollama) in case it's wrapped in markdown
+            response_text = response.content[0].text
+            cleaned_response = extract_json_from_text(response_text)
+            
+            return cleaned_response
         except Exception as e:
             raise Exception(f"Anthropic API error: {str(e)}")
 

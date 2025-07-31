@@ -323,14 +323,25 @@ Return ONLY the JSON array, no explanations or markdown formatting.
                 cleaned_response = cleaned_response[:-3]
             
             import json
-            slide_plan = json.loads(cleaned_response.strip())
+            
+            # Add debugging for JSON parsing issues
+            logger.info(f"Attempting to parse JSON response (length: {len(cleaned_response)})")
+            logger.info(f"JSON preview: {cleaned_response[:200]}...")
+            
+            try:
+                slide_plan = json.loads(cleaned_response.strip())
+            except json.JSONDecodeError as e:
+                logger.error(f"JSON parsing failed: {e}")
+                logger.error(f"Raw response: {cleaned_response}")
+                logger.error(f"Error at position {e.pos}: '{cleaned_response[max(0, e.pos-20):e.pos+20]}'")
+                raise Exception(f"Invalid JSON response from LLM: {str(e)}")
             
             # Handle both single slide object and array of slides
             if isinstance(slide_plan, dict):
                 # Single slide object - wrap it in an array
                 slide_plan = [slide_plan]
             elif isinstance(slide_plan, list):
-                logger.info(f"Processing {len(slide_plan)} slides from Ollama")
+                logger.info(f"Processing {len(slide_plan)} slides from LLM")
             else:
                 raise Exception(f"Unexpected JSON structure type: {type(slide_plan)}")
             
