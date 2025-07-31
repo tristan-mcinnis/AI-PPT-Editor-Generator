@@ -162,57 +162,23 @@ class OllamaProvider(LLMProvider):
     def generate_response(self, prompt: str) -> str:
         try:
             # Add system context to prompt - balance between JSON requirement and content generation
-            system_prompt = """You are a helpful assistant specializing in presentation creation and editing. 
+            system_prompt = """Return a JSON array of ALL slides from the structured text.
 
-CRITICAL: Your response must be a valid JSON ARRAY containing ALL slides from the structured text.
+Format: [{"slide_number": 1, "title": "Title", "content_blocks": [{"type": "bullets", "items": ["Item 1"]}]}]
 
-Generate a JSON array with this exact structure for MULTIPLE slides:
+Content block types:
+- bullets: {"type": "bullets", "items": ["Point 1", "Point 2"]}
+- text: {"type": "text", "text": "Paragraph content"}  
+- content_box: {"type": "content_box", "title": "Box Title", "items": ["Item 1"]}
 
-[
-  {
-    "slide_number": 1,
-    "title": "First slide title",
-    "content_blocks": [
-      {
-        "type": "bullets",
-        "items": ["Bullet 1", "Bullet 2", "Bullet 3"]
-      }
-    ]
-  },
-  {
-    "slide_number": 2, 
-    "title": "Second slide title",
-    "content_blocks": [
-      {
-        "type": "text",
-        "text": "Paragraph content"
-      }
-    ]
-  },
-  {
-    "slide_number": 3,
-    "title": "Third slide title", 
-    "content_blocks": [
-      {
-        "type": "content_box",
-        "title": "Box Title",
-        "items": ["Item 1", "Item 2"]
-      }
-    ]
-  }
-]
-
-CRITICAL REQUIREMENTS:
-1. MUST start with [ and end with ] (JSON array)
-2. Include ALL slides from the structured text (not just one)
-3. Each slide: slide_number, title, content_blocks
-4. Content blocks: type field (bullets, text, or content_box)
-5. Generate complete content for every slide found in the input"""
+CRITICAL: Start with [ end with ]. Include ALL slides."""
             
             full_prompt = system_prompt + "\n\n" + prompt
             
             # For longer prompts, use a longer timeout and warn up the model
-            estimated_timeout = min(max(60, len(full_prompt) // 100), 180)  # 60-180 seconds based on prompt length
+            base_timeout = 90  # Increased base timeout for complex JSON generation
+            additional_timeout = len(full_prompt) // 50  # More generous: 1 second per 50 characters
+            estimated_timeout = min(base_timeout + additional_timeout, 300)  # 90-300 seconds based on prompt length
             
             logger.info(f"Starting Ollama request - Model: {self.model}, Prompt length: {len(full_prompt)}, Timeout: {estimated_timeout}s")
             
@@ -222,23 +188,23 @@ CRITICAL REQUIREMENTS:
                 warm_up_success = self._warm_up_model()
                 logger.info(f"Warm-up result: {'Success' if warm_up_success else 'Failed'}")
             
-            # Prepare the request
+            # Prepare the request - optimized for speed and JSON generation
             request_data = {
                 "model": self.model,
                 "prompt": full_prompt,
                 "stream": False,
                 "options": {
-                    "temperature": 0.5,  # Slightly higher for more creative content
-                    "num_predict": 4000,  # Increase for longer responses
-                    "top_k": 40,
-                    "top_p": 0.9,
-                    "repeat_penalty": 1.1,
-                    "seed": -1  # Random seed for variety
+                    "temperature": 0.3,  # Lower for more consistent JSON structure
+                    "num_predict": 3000,  # Reduced but still sufficient 
+                    "top_k": 30,  # Reduced for faster processing
+                    "top_p": 0.8,  # Reduced for more focused output
+                    "repeat_penalty": 1.0,  # Reduced to avoid over-penalty
+                    "num_thread": 8  # Use more threads for faster processing
                 }
             }
             
             logger.info(f"Making Ollama API request to {self.host}/api/generate")
-            logger.info(f"Request data: model={self.model}, stream=False, num_predict=4000, temp=0.5")
+            logger.info(f"Request data: model={self.model}, stream=False, num_predict=3000, temp=0.3, threads=8")
             
             response = requests.post(
                 f"{self.host}/api/generate",
