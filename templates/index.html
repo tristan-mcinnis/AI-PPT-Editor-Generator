@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SlideSpark AI - Intelligent Presentation Co-pilot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Panel 1: Structure Explorer -->
+        <div class="panel structure-explorer">
+            <div class="panel-header">
+                <h2>1. Structure Explorer</h2>
+            </div>
+            <div class="panel-content">
+                <div class="console-section">
+                    <h3>Start Here</h3>
+                    <button id="upload-presentation-btn" class="btn btn-primary">
+                        📂 Upload Presentation (.pptx)
+                    </button>
+                    <input type="file" id="presentation-file" accept=".pptx" style="display: none;">
+                    <small style="display: block; margin-top: 0.5rem; color: #6c757d;">
+                        Upload a PowerPoint file to begin editing
+                    </small>
+                </div>
+                
+                <div class="console-section">
+                    <h3>Presentation Structure</h3>
+                    <div id="structure-tree" class="tree-view">
+                        <p class="placeholder">No presentation loaded yet</p>
+                    </div>
+                    <small style="display: block; margin-top: 0.5rem; color: #6c757d;">
+                        Click on any shape to select it for editing
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel 2: AI Command Console -->
+        <div class="panel command-console">
+            <div class="panel-header">
+                <h2>2. AI Command Console</h2>
+            </div>
+            <div class="panel-content">
+                <!-- Action Buttons Section -->
+                <div class="console-section">
+                    <h3>Create or Import Content</h3>
+                    <div class="button-group">
+                        <div class="button-item">
+                            <button id="ingest-document-btn" class="btn btn-secondary">
+                                📄 Import from Document
+                            </button>
+                            <small>Upload a Word/text file to convert into slides</small>
+                        </div>
+                        <div class="button-item">
+                            <button id="build-presentation-btn" class="btn btn-secondary" style="background-color: #28a745; color: white; border: none;">
+                                🏗️ Build from Text
+                            </button>
+                            <small><strong>Click this button</strong> to enter build mode, then paste your structured text below</small>
+                        </div>
+                    </div>
+                    <input type="file" id="document-file" accept=".docx,.txt" style="display: none;">
+                </div>
+                
+                <!-- Context Mode Section - Only shown when editing existing content -->
+                <div class="console-section" id="edit-mode-section" style="display: none;">
+                    <h3>Edit Mode Settings</h3>
+                    <div class="context-toggle">
+                        <label class="context-option">
+                            <input type="radio" name="context-mode" value="local" checked>
+                            <span class="context-label">Local Context</span>
+                            <small>Edit only the selected shape</small>
+                        </label>
+                        <label class="context-option">
+                            <input type="radio" name="context-mode" value="global">
+                            <span class="context-label">Global Context</span>
+                            <small>Consider entire presentation for consistency</small>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Console Output Section -->
+                <div class="console-section">
+                    <h3>Activity Log</h3>
+                    <div id="console-output" class="console-output"></div>
+                </div>
+                
+                <!-- Command Input Section -->
+                <div class="console-section">
+                    <h3 id="command-section-title">Command Input</h3>
+                    <div class="console-input">
+                        <textarea 
+                            id="command-input" 
+                            placeholder="Select a shape first, then enter your command here..."
+                            rows="3"
+                            disabled
+                        ></textarea>
+                        <div class="console-buttons">
+                            <button id="execute-command" class="btn btn-primary" disabled>Execute</button>
+                            <button id="toggle-input-size" class="btn btn-small">Expand</button>
+                        </div>
+                        <div id="mode-indicator" style="font-size: 0.75rem; color: #6c757d; margin-top: 0.5rem; display: none;">
+                            <!-- Mode indicator will be shown here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel 3: Live Visual Preview -->
+        <div class="panel visual-preview">
+            <div class="panel-header">
+                <h2>3. Visual Preview</h2>
+                <div class="slide-controls">
+                    <button id="prev-slide" class="btn btn-small" disabled>◀ Previous</button>
+                    <span id="slide-indicator">No slide</span>
+                    <button id="next-slide" class="btn btn-small" disabled>Next ▶</button>
+                </div>
+            </div>
+            <div class="panel-content">
+                <div id="slide-preview" class="slide-preview">
+                    <p class="placeholder">No slide to preview</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden form for file uploads -->
+    <form id="upload-form" style="display: none;">
+        <input type="hidden" id="session-id">
+    </form>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
