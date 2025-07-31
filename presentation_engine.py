@@ -525,6 +525,20 @@ Return ONLY the JSON array, no explanations or markdown formatting.
             
             # Save the presentation
             prs.save(filepath)
+            logger.info(f"Saved presentation to {filepath}")
+            
+            # Add delay to ensure file is fully written before preview generation
+            import time
+            time.sleep(2)
+            
+            # Verify file was written correctly
+            import os
+            if os.path.exists(filepath):
+                file_size = os.path.getsize(filepath)
+                logger.info(f"Presentation file saved successfully: {file_size} bytes")
+            else:
+                logger.error(f"Presentation file not found after save: {filepath}")
+            
             return True
             
         except Exception as e:

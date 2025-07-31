@@ -408,8 +408,18 @@ def generate_all_slide_previews(session_id, filepath):
                     logger.error(f"STDERR: {result.stderr}")
                     return None
             
-            # Wait for files to be written
-            time.sleep(2)
+            # Wait longer for files to be written and LibreOffice to finish
+            time.sleep(3)
+            
+            # Verify the source file exists and has reasonable size
+            if os.path.exists(filepath):
+                file_size = os.path.getsize(filepath)
+                logger.info(f"Source presentation file: {file_size} bytes")
+                if file_size < 1000:  # Very small file might indicate corruption
+                    logger.warning(f"Source file seems unusually small: {file_size} bytes")
+            else:
+                logger.error(f"Source presentation file not found: {filepath}")
+                return None
             
             # List all generated files
             png_files = [f for f in os.listdir(temp_dir) if f.endswith('.png')]
