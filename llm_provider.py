@@ -161,13 +161,28 @@ class OllamaProvider(LLMProvider):
 
     def generate_response(self, prompt: str) -> str:
         try:
-            # Add system context to prompt - be very explicit about JSON for Ollama
+            # Add system context to prompt - balance between JSON requirement and content generation
             system_prompt = """You are a helpful assistant specializing in presentation creation and editing. 
 
-CRITICAL: You must ONLY return valid JSON. Do not include any explanations, reasoning, or other text. 
-Do not use <think> tags or any other formatting. 
-Start your response immediately with { and end with }.
-Return ONLY the JSON object, nothing else."""
+IMPORTANT: Your response must be valid JSON format. Generate the complete JSON response with all the required content.
+
+Format your response as a JSON object with the structure requested in the prompt. Make sure to:
+1. Include all slides and content from the input
+2. Follow the exact JSON schema required
+3. Provide complete, detailed content for each slide
+4. Start with { and end with }
+
+Example format:
+{
+  "slides": [
+    {
+      "slide_number": 1,
+      "title": "Slide Title",
+      "content": ["Point 1", "Point 2", "Point 3"],
+      "layout": "title_and_content"
+    }
+  ]
+}"""
             
             full_prompt = system_prompt + "\n\n" + prompt
             
@@ -187,19 +202,18 @@ Return ONLY the JSON object, nothing else."""
                 "model": self.model,
                 "prompt": full_prompt,
                 "stream": False,
-                "format": "json",  # Try to use JSON format if supported
                 "options": {
-                    "temperature": 0.3,  # Lower temperature for more consistent JSON
-                    "num_predict": 3000,
+                    "temperature": 0.5,  # Slightly higher for more creative content
+                    "num_predict": 4000,  # Increase for longer responses
                     "top_k": 40,
                     "top_p": 0.9,
-                    "stop": ["```", "```json", "```JSON"],  # Stop at code blocks
-                    "repeat_penalty": 1.1
+                    "repeat_penalty": 1.1,
+                    "seed": -1  # Random seed for variety
                 }
             }
             
             logger.info(f"Making Ollama API request to {self.host}/api/generate")
-            logger.info(f"Request data: model={self.model}, stream=False, num_predict=3000")
+            logger.info(f"Request data: model={self.model}, stream=False, num_predict=4000, temp=0.5")
             
             response = requests.post(
                 f"{self.host}/api/generate",
@@ -223,10 +237,41 @@ Return ONLY the JSON object, nothing else."""
             logger.info(f"Generated response length: {len(response_text)}")
             logger.info(f"Response preview: {response_text[:200]}...")
             
+            # Check if response is too short (likely empty or incomplete)
+            if len(response_text.strip()) < 50:
+                logger.warning(f"Response too short ({len(response_text)} chars), attempting retry with different settings")
+                # Try one more time with higher temperature and different approach
+                retry_request = {
+                    "model": self.model,
+                    "prompt": f"Generate a detailed JSON response for the following request. Be thorough and complete:\n\n{prompt}",
+                    "stream": False,
+                    "options": {
+                        "temperature": 0.8,
+                        "num_predict": 4000,
+                        "top_k": 50,
+                        "top_p": 0.95
+                    }
+                }
+                
+                retry_response = requests.post(
+                    f"{self.host}/api/generate",
+                    json=retry_request,
+                    timeout=estimated_timeout,
+                    headers={'Content-Type': 'application/json'}
+                )
+                retry_response.raise_for_status()
+                retry_result = retry_response.json()
+                response_text = retry_result.get('response', response_text)
+                logger.info(f"Retry response length: {len(response_text)}")
+            
             # Extract JSON from the response for Ollama
             cleaned_response = extract_json_from_text(response_text)
             logger.info(f"Cleaned response length: {len(cleaned_response)}")
             logger.info(f"Cleaned response preview: {cleaned_response[:200]}...")
+            
+            # Final check - if still too short, raise an error
+            if len(cleaned_response.strip()) < 20:
+                raise Exception(f"Ollama generated insufficient content (only {len(cleaned_response)} characters). Try using a larger model like qwen3:7b or llama2:7b")
                 
             return cleaned_response
             
