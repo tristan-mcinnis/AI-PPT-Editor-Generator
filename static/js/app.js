@@ -38,6 +38,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const ollamaModelSection = document.getElementById('ollama-model-section');
     const ollamaModelSelect = document.getElementById('ollama-model');
     const testOllamaBtn = document.getElementById('test-ollama-btn');
+    const exportSection = document.getElementById('export-section');
+    const exportPptxBtn = document.getElementById('export-pptx');
+    const exportPdfBtn = document.getElementById('export-pdf');
 
     // Check if critical elements exist
     console.log('Build button found:', !!buildPresentationBtn);
@@ -89,6 +92,14 @@ document.addEventListener('DOMContentLoaded', function() {
             selectedProvider = storedProvider;
             updateProviderStatus(storedProvider);
         }
+        
+        // Export button event listeners
+        if (exportPptxBtn) {
+            exportPptxBtn.addEventListener('click', handleExportPptx);
+        }
+        if (exportPdfBtn) {
+            exportPdfBtn.addEventListener('click', handleExportPdf);
+        }
     } catch (error) {
         console.error('Error setting up event listeners:', error);
     }
@@ -122,6 +133,7 @@ document.addEventListener('DOMContentLoaded', function() {
             renderStructureTree();
             enableConsole();
             updateSlidePreview();
+            showExportSection(); // Show export buttons when presentation is available
             
             addConsoleMessage('✅ Presentation uploaded successfully!');
             
@@ -540,6 +552,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             addConsoleMessage('✅ Presentation built successfully!', 'info');
             addConsoleMessage(`📊 Created ${data.structure.slides.length} slides`, 'info');
+            showExportSection(); // Show export buttons after successful build
             commandInput.value = '';
             
             // Exit build mode automatically after successful build
@@ -771,6 +784,101 @@ document.addEventListener('DOMContentLoaded', function() {
     if (selectedProvider === 'ollama' && ollamaModelSection) {
         ollamaModelSection.style.display = 'block';
         loadOllamaModels();
+    }
+
+    // Export functionality
+    function showExportSection() {
+        if (exportSection && currentSession) {
+            exportSection.style.display = 'block';
+        }
+    }
+
+    function hideExportSection() {
+        if (exportSection) {
+            exportSection.style.display = 'none';
+        }
+    }
+
+    // Handle PPTX export
+    async function handleExportPptx() {
+        if (!currentSession) {
+            addConsoleMessage('❌ No presentation to export', 'error');
+            return;
+        }
+
+        try {
+            exportPptxBtn.textContent = 'Downloading...';
+            exportPptxBtn.disabled = true;
+
+            addConsoleMessage('📁 Downloading PPTX file...', 'info');
+
+            // Create download link
+            const downloadUrl = `/api/presentation/${currentSession}/download`;
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = ''; // Let server determine filename
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            addConsoleMessage('✅ PPTX download started', 'info');
+
+        } catch (error) {
+            addConsoleMessage(`❌ Export error: ${error.message}`, 'error');
+        } finally {
+            exportPptxBtn.textContent = '📁 Download PPTX';
+            exportPptxBtn.disabled = false;
+        }
+    }
+
+    // Handle PDF export
+    async function handleExportPdf() {
+        if (!currentSession) {
+            addConsoleMessage('❌ No presentation to export', 'error');
+            return;
+        }
+
+        try {
+            exportPdfBtn.textContent = 'Converting...';
+            exportPdfBtn.disabled = true;
+
+            addConsoleMessage('📄 Converting to PDF (this may take a moment)...', 'info');
+
+            const response = await fetch(`/api/presentation/${currentSession}/export/pdf`);
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'PDF export failed');
+            }
+
+            // Create download from response blob
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            
+            // Get filename from response header or use default
+            const contentDisposition = response.headers.get('Content-Disposition');
+            let filename = 'presentation.pdf';
+            if (contentDisposition) {
+                const match = contentDisposition.match(/filename="?([^"]+)"?/);
+                if (match) filename = match[1];
+            }
+            
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+
+            addConsoleMessage('✅ PDF export completed', 'info');
+
+        } catch (error) {
+            addConsoleMessage(`❌ PDF export error: ${error.message}`, 'error');
+        } finally {
+            exportPdfBtn.textContent = '📄 Export as PDF';
+            exportPdfBtn.disabled = false;
+        }
     }
 
 }); // End of DOMContentLoaded

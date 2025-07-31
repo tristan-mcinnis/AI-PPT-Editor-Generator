@@ -683,6 +683,96 @@ def download_presentation(session_id):
     
     return send_file(filepath, as_attachment=True, download_name=filename)
 
+@app.route('/api/presentation/<session_id>/export/pdf', methods=['GET'])
+def export_presentation_as_pdf(session_id):
+    """Export presentation as PDF using LibreOffice."""
+    if session_id not in sessions:
+        return jsonify({'error': 'Session not found'}), 404
+    
+    filepath = sessions[session_id]['filepath']
+    filename = sessions[session_id]['filename']
+    
+    # Use global lock to prevent concurrent LibreOffice processes
+    with libreoffice_lock:
+        temp_dir = None
+        try:
+            # Create unique temporary directory for PDF export
+            temp_dir = tempfile.mkdtemp(prefix=f"pdf_export_{session_id}_")
+            logger.info(f"Created temp directory for PDF export: {temp_dir}")
+            
+            # Check if LibreOffice is available
+            check_cmd = ['soffice', '--version']
+            result = subprocess.run(check_cmd, capture_output=True, text=True, timeout=10)
+            
+            if result.returncode != 0:
+                logger.warning(f"LibreOffice not available for PDF export: {result.stderr}")
+                return jsonify({'error': 'PDF export not available - LibreOffice not found'}), 500
+            
+            logger.info(f"LibreOffice found for PDF export: {result.stdout.strip()}")
+            
+            # Kill any existing LibreOffice processes to prevent conflicts
+            try:
+                subprocess.run(['pkill', '-f', 'soffice'], capture_output=True, timeout=5)
+                time.sleep(1)
+            except:
+                pass
+            
+            # Convert presentation to PDF
+            base_name = os.path.splitext(os.path.basename(filepath))[0]
+            pdf_filename = f"{base_name}.pdf"
+            pdf_path = os.path.join(temp_dir, pdf_filename)
+            
+            pdf_cmd = [
+                'soffice',
+                '--headless',
+                '--invisible', 
+                '--nologo',
+                '--nolockcheck',
+                '--convert-to',
+                'pdf',
+                '--outdir',
+                temp_dir,
+                filepath
+            ]
+            
+            logger.info(f"Converting to PDF: {' '.join(pdf_cmd)}")
+            result = subprocess.run(pdf_cmd, capture_output=True, text=True, timeout=120)
+            
+            if result.returncode != 0:
+                logger.error(f"PDF conversion failed with return code {result.returncode}")
+                logger.error(f"STDOUT: {result.stdout}")
+                logger.error(f"STDERR: {result.stderr}")
+                return jsonify({'error': 'PDF conversion failed'}), 500
+            
+            # Wait for file to be written
+            time.sleep(2)
+            
+            if os.path.exists(pdf_path):
+                logger.info(f"PDF export successful: {pdf_filename}")
+                # Generate download filename
+                original_name = os.path.splitext(filename)[0]
+                download_name = f"{original_name}.pdf"
+                return send_file(pdf_path, as_attachment=True, download_name=download_name, mimetype='application/pdf')
+            else:
+                logger.error(f"PDF file was not created: {pdf_path}")
+                return jsonify({'error': 'PDF file was not created'}), 500
+                
+        except subprocess.TimeoutExpired:
+            logger.error("PDF conversion timed out")
+            return jsonify({'error': 'PDF conversion timed out'}), 500
+        except Exception as e:
+            logger.error(f"PDF export failed: {e}")
+            return jsonify({'error': f'PDF export failed: {str(e)}'}), 500
+        finally:
+            # Clean up LibreOffice processes
+            try:
+                subprocess.run(['pkill', '-f', 'soffice'], capture_output=True, timeout=5)
+            except:
+                pass
+            
+            # Note: We don't clean up temp_dir immediately as send_file needs it
+            # The file will be cleaned up by the OS eventually
+
 @app.route('/api/presentation/<session_id>/build', methods=['POST'])
 def build_presentation(session_id):
     """Build out the entire presentation from structured text."""
