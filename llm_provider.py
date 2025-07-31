@@ -2,7 +2,10 @@ from abc import ABC, abstractmethod
 import os
 import json
 import requests
+import logging
 from typing import Optional
+
+logger = logging.getLogger(__name__)
 
 class LLMProvider(ABC):
     @abstractmethod
@@ -36,18 +39,59 @@ class OllamaProvider(LLMProvider):
     def __init__(self, host: str = "http://localhost:11434", model: str = "qwen3:1.7b"):
         self.host = host.rstrip('/')  # Remove trailing slash
         self.model = model
-        # Test connection
+        # Test connection and check if model exists
         try:
-            test_response = requests.get(f"{self.host}/api/tags")
+            test_response = requests.get(f"{self.host}/api/tags", timeout=10)
             test_response.raise_for_status()
-        except Exception as e:
+            
+            # Check if the model exists
+            models_data = test_response.json()
+            available_models = [m.get('name', '') for m in models_data.get('models', [])]
+            if self.model not in available_models:
+                raise Exception(f"Model '{self.model}' not found. Available models: {', '.join(available_models)}. Install with: ollama pull {self.model}")
+                
+        except requests.exceptions.RequestException as e:
             raise Exception(f"Cannot connect to Ollama at {self.host}: {str(e)}")
+        except Exception as e:
+            if "not found" in str(e):
+                raise e  # Re-raise model not found errors
+            raise Exception(f"Error checking Ollama models: {str(e)}")
+
+    def _warm_up_model(self):
+        """Warm up the model with a small request to ensure it's loaded."""
+        try:
+            warm_up_response = requests.post(
+                f"{self.host}/api/generate",
+                json={
+                    "model": self.model,
+                    "prompt": "Hello",
+                    "stream": False,
+                    "options": {
+                        "num_predict": 5
+                    }
+                },
+                timeout=30
+            )
+            warm_up_response.raise_for_status()
+            return True
+        except Exception as e:
+            logger.warning(f"Model warm-up failed: {e}")
+            return False
 
     def generate_response(self, prompt: str) -> str:
         try:
             # Add system context to prompt
             full_prompt = "You are a helpful assistant specializing in presentation creation and editing. When asked to generate presentation plans, always return valid JSON.\n\n" + prompt
             
+            # For longer prompts, use a longer timeout and warn up the model
+            estimated_timeout = min(max(60, len(full_prompt) // 100), 180)  # 60-180 seconds based on prompt length
+            
+            # Try to warm up the model first for better response times
+            if len(full_prompt) > 500:
+                logger.info(f"Warming up Ollama model {self.model}...")
+                self._warm_up_model()
+            
+            logger.info(f"Generating response with Ollama model '{self.model}' (timeout: {estimated_timeout}s)")
             response = requests.post(
                 f"{self.host}/api/generate",
                 json={
@@ -56,16 +100,28 @@ class OllamaProvider(LLMProvider):
                     "stream": False,
                     "options": {
                         "temperature": 0.7,
-                        "num_predict": 2000
+                        "num_predict": 3000,  # Increased for longer responses
+                        "top_k": 40,
+                        "top_p": 0.9
                     }
                 },
-                timeout=60  # 60 second timeout for local models
+                timeout=estimated_timeout
             )
             response.raise_for_status()
-            return response.json()['response']
+            result = response.json()
+            
+            if 'response' not in result:
+                raise Exception(f"Invalid response format from Ollama: {result}")
+                
+            return result['response']
+            
         except requests.exceptions.Timeout:
-            raise Exception(f"Ollama request timed out. The model might be too slow or not loaded.")
+            raise Exception(f"Ollama request timed out after {estimated_timeout}s. Try using a smaller/faster model or reduce your content length.")
+        except requests.exceptions.ConnectionError:
+            raise Exception(f"Cannot connect to Ollama at {self.host}. Make sure Ollama is running.")
         except Exception as e:
+            if "model" in str(e).lower() and "not found" in str(e).lower():
+                raise Exception(f"Model '{self.model}' not found. Install it with: ollama pull {self.model}")
             raise Exception(f"Ollama API error: {str(e)}")
 
 class AnthropicProvider(LLMProvider):

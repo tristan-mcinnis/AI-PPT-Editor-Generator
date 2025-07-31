@@ -501,7 +501,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         try {
             showLoading();
-            addConsoleMessage('🔧 Processing structured text with AI...', 'info');
+            if (selectedProvider === 'ollama') {
+                addConsoleMessage('🔧 Processing with Ollama (this may take longer for local models)...', 'info');
+                addConsoleMessage(`🤖 Using model: ${selectedOllamaModel}`, 'info');
+            } else {
+                addConsoleMessage('🔧 Processing structured text with AI...', 'info');
+            }
             addConsoleMessage(`📝 Content preview: ${structuredText.substring(0, 100)}...`, 'info');
             
             console.log('Making API call to:', `/api/presentation/${currentSession}/build`);
@@ -579,6 +584,9 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             showLoading();
             addConsoleMessage(`> ${command}`);
+            if (selectedProvider === 'ollama') {
+                addConsoleMessage(`🤖 Processing with Ollama model: ${selectedOllamaModel}`, 'info');
+            }
             
             const response = await fetch(`/api/presentation/${currentSession}/edit`, {
                 method: 'POST',

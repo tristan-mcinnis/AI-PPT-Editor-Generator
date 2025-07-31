@@ -651,6 +651,8 @@ def build_presentation(session_id):
         logger.info(f"Structured text length: {len(structured_text)}")
         logger.info(f"Structured text preview: {structured_text[:100]}...")
         logger.info(f"Using provider: {provider}")
+        if ollama_model:
+            logger.info(f"Using Ollama model: {ollama_model}")
         
         if not structured_text:
             logger.error("No structured text provided")
