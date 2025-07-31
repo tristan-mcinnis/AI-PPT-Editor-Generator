@@ -321,6 +321,20 @@ Return ONLY the JSON array, no explanations or markdown formatting.
             import json
             slide_plan = json.loads(cleaned_response.strip())
             
+            # Debug: Log the parsed JSON structure
+            print(f"DEBUG: Parsed JSON type: {type(slide_plan)}")
+            print(f"DEBUG: Parsed JSON content: {slide_plan}")
+            
+            # Handle both single slide object and array of slides
+            if isinstance(slide_plan, dict):
+                # Single slide object - wrap it in an array
+                print("DEBUG: Single slide object detected, wrapping in array")
+                slide_plan = [slide_plan]
+            elif isinstance(slide_plan, list):
+                print(f"DEBUG: Array of {len(slide_plan)} slides detected")
+            else:
+                raise Exception(f"Unexpected JSON structure type: {type(slide_plan)}")
+            
             # Load the presentation
             prs = Presentation(filepath)
             
@@ -333,6 +347,11 @@ Return ONLY the JSON array, no explanations or markdown formatting.
             
             # Build each slide from the plan
             for slide_data in slide_plan:
+                print(f"DEBUG: Processing slide_data type: {type(slide_data)}, content: {slide_data}")
+                
+                if isinstance(slide_data, str):
+                    print(f"ERROR: slide_data is string: {slide_data}")
+                    continue
                 slide_layout = prs.slide_layouts[5]  # Blank layout
                 slide = prs.slides.add_slide(slide_layout)
                 

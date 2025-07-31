@@ -164,23 +164,35 @@ class OllamaProvider(LLMProvider):
             # Add system context to prompt - balance between JSON requirement and content generation
             system_prompt = """You are a helpful assistant specializing in presentation creation and editing. 
 
-IMPORTANT: Your response must be a valid JSON ARRAY (not an object). Generate the complete JSON response with all the required content.
+CRITICAL: Your response must be a valid JSON ARRAY containing ALL slides from the structured text.
 
-You must return a JSON array with this exact structure:
+Generate a JSON array with this exact structure for MULTIPLE slides:
 
 [
   {
     "slide_number": 1,
-    "title": "Slide title text",
+    "title": "First slide title",
     "content_blocks": [
       {
         "type": "bullets",
         "items": ["Bullet 1", "Bullet 2", "Bullet 3"]
-      },
+      }
+    ]
+  },
+  {
+    "slide_number": 2, 
+    "title": "Second slide title",
+    "content_blocks": [
       {
-        "type": "text", 
-        "text": "Regular paragraph text"
-      },
+        "type": "text",
+        "text": "Paragraph content"
+      }
+    ]
+  },
+  {
+    "slide_number": 3,
+    "title": "Third slide title", 
+    "content_blocks": [
       {
         "type": "content_box",
         "title": "Box Title",
@@ -191,11 +203,11 @@ You must return a JSON array with this exact structure:
 ]
 
 CRITICAL REQUIREMENTS:
-1. Start with [ and end with ] (JSON array, not object)
-2. Each slide must have: slide_number, title, content_blocks
-3. Content blocks must have a "type" field (bullets, text, or content_box)
-4. Include all slides and content from the input
-5. Generate complete, detailed content for each slide"""
+1. MUST start with [ and end with ] (JSON array)
+2. Include ALL slides from the structured text (not just one)
+3. Each slide: slide_number, title, content_blocks
+4. Content blocks: type field (bullets, text, or content_box)
+5. Generate complete content for every slide found in the input"""
             
             full_prompt = system_prompt + "\n\n" + prompt
             
