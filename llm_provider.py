@@ -171,7 +171,13 @@ Content block types:
 - text: {"type": "text", "text": "Paragraph content"}  
 - content_box: {"type": "content_box", "title": "Box Title", "items": ["Item 1"]}
 
-CRITICAL: Start with [ end with ]. Include ALL slides."""
+CRITICAL RULES:
+1. Start with [ end with ]
+2. Include ALL slides  
+3. NO duplicate content blocks per slide
+4. Use content_box for grouped information with titles
+5. Use bullets for simple lists
+6. Keep content concise and organized"""
             
             full_prompt = system_prompt + "\n\n" + prompt
             
