@@ -4,8 +4,12 @@ from pptx.enum.text import PP_ALIGN
 from pptx.dml.color import RGBColor
 import json
 import uuid
+import logging
 from typing import Dict, List, Tuple, Optional
 import xml.etree.ElementTree as ET
+
+# Set up logger
+logger = logging.getLogger(__name__)
 
 class PresentationEngine:
     def __init__(self):
