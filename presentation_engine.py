@@ -333,30 +333,38 @@ Return ONLY the JSON array, no explanations or markdown formatting.
             # Load the presentation
             prs = Presentation(filepath)
             
-            # Clear existing slides more cleanly to avoid duplicate XML issues
-            slide_part = prs.part
-            while len(prs.slides) > 0:
-                slide_to_remove = prs.slides[0]
-                slide_part.drop_rel(slide_to_remove.rId)
-                del prs.slides._sldIdLst[0]
+            # Clear existing slides using safer approach
+            # Create a new presentation to avoid XML conflicts
+            from pptx import Presentation as NewPresentation
+            prs = NewPresentation()  # Start with a fresh presentation
             
             # Build each slide from the plan
-            for slide_data in slide_plan:
-                if isinstance(slide_data, str):
-                    logger.warning(f"Skipping invalid slide data (string): {slide_data}")
+            for slide_idx, slide_data in enumerate(slide_plan):
+                try:
+                    if isinstance(slide_data, str):
+                        logger.warning(f"Skipping invalid slide data (string): {slide_data}")
+                        continue
+                    
+                    logger.info(f"Building slide {slide_idx + 1}: {slide_data.get('title', 'No title')}")
+                    slide_layout = prs.slide_layouts[5]  # Blank layout
+                    slide = prs.slides.add_slide(slide_layout)
+                    
+                except Exception as e:
+                    logger.error(f"Error creating slide {slide_idx + 1}: {e}")
                     continue
-                slide_layout = prs.slide_layouts[5]  # Blank layout
-                slide = prs.slides.add_slide(slide_layout)
                 
-                # Add title
-                if 'title' in slide_data and slide_data['title']:
-                    title_shape = slide.shapes.add_textbox(
-                        Inches(0.5), Inches(0.3), Inches(9), Inches(0.8)
-                    )
-                    title_frame = title_shape.text_frame
-                    title_frame.text = slide_data['title']
-                    title_frame.paragraphs[0].font.size = Pt(28)
-                    title_frame.paragraphs[0].font.bold = True
+                try:
+                    # Add title
+                    if 'title' in slide_data and slide_data['title']:
+                        title_shape = slide.shapes.add_textbox(
+                            Inches(0.5), Inches(0.3), Inches(9), Inches(0.8)
+                        )
+                        title_frame = title_shape.text_frame
+                        title_frame.text = slide_data['title']
+                        title_frame.paragraphs[0].font.size = Pt(28)
+                        title_frame.paragraphs[0].font.bold = True
+                except Exception as e:
+                    logger.error(f"Error adding title to slide {slide_idx + 1}: {e}")
                 
                 # Process content blocks with deduplication
                 y_position = 1.5  # Starting Y position in inches
@@ -383,96 +391,102 @@ Return ONLY the JSON array, no explanations or markdown formatting.
                 
                 logger.info(f"Deduplicated {len(slide_data.get('content_blocks', []))} blocks to {len(unique_blocks)} unique blocks")
                 
-                for block in unique_blocks:
-                    if block['type'] == 'bullets':
-                        # Add bullet points with better spacing
-                        num_items = len(block.get('items', []))
-                        if num_items == 0:
-                            continue
+                try:
+                    for block in unique_blocks:
+                        if block['type'] == 'bullets':
+                            # Add bullet points with better spacing
+                            num_items = len(block.get('items', []))
+                            if num_items == 0:
+                                continue
+                                
+                            # Calculate height more accurately - 0.3 inches per line + padding
+                            height = max(0.6, num_items * 0.3 + 0.3)
                             
-                        # Calculate height more accurately - 0.3 inches per line + padding
-                        height = max(0.6, num_items * 0.3 + 0.3)
-                        
-                        content_shape = slide.shapes.add_textbox(
-                            Inches(0.5), Inches(y_position), Inches(9), Inches(height)
-                        )
-                        text_frame = content_shape.text_frame
-                        text_frame.margin_top = Inches(0.1)
-                        text_frame.margin_bottom = Inches(0.1)
-                        
-                        for idx, item in enumerate(block['items']):
-                            if idx == 0:
-                                p = text_frame.paragraphs[0]
-                            else:
-                                p = text_frame.add_paragraph()
-                            p.text = f"• {item}"
-                            p.font.size = Pt(14)  # Slightly smaller for better fit
-                            p.level = 0
-                            p.space_after = Pt(6)  # Add space between bullet points
-                        
-                        y_position += height + 0.2  # Add buffer space
-                    
-                    elif block['type'] == 'text':
-                        # Add regular text with better sizing
-                        text_content = block.get('text', '')
-                        if not text_content:
-                            continue
+                            content_shape = slide.shapes.add_textbox(
+                                Inches(0.5), Inches(y_position), Inches(9), Inches(height)
+                            )
+                            text_frame = content_shape.text_frame
+                            text_frame.margin_top = Inches(0.1)
+                            text_frame.margin_bottom = Inches(0.1)
                             
-                        # Estimate height based on text length (rough calculation)
-                        estimated_lines = max(1, len(text_content) // 80 + 1)
-                        height = max(0.4, estimated_lines * 0.25 + 0.2)
-                        
-                        text_shape = slide.shapes.add_textbox(
-                            Inches(0.5), Inches(y_position), Inches(9), Inches(height)
-                        )
-                        text_frame = text_shape.text_frame
-                        text_frame.text = text_content
-                        text_frame.paragraphs[0].font.size = Pt(14)
-                        text_frame.margin_top = Inches(0.1)
-                        text_frame.margin_bottom = Inches(0.1)
-                        
-                        y_position += height + 0.2
-                    
-                    elif block['type'] == 'content_box':
-                        # Add content box with title and better sizing
-                        box_title = block.get('title', '')
-                        box_items = block.get('items', [])
-                        
-                        if not box_title and not box_items:
-                            continue
-                        
-                        # Calculate height based on content
-                        num_items = len(box_items)
-                        # Title + items + padding
-                        height = 0.4 + (num_items * 0.25) + 0.3
-                        height = max(0.8, height)
-                        
-                        box_shape = slide.shapes.add_textbox(
-                            Inches(0.7), Inches(y_position), Inches(8.5), Inches(height)
-                        )
-                        text_frame = box_shape.text_frame
-                        text_frame.margin_top = Inches(0.1)
-                        text_frame.margin_bottom = Inches(0.1)
-                        text_frame.margin_left = Inches(0.2)
-                        text_frame.margin_right = Inches(0.2)
-                        
-                        # Box title
-                        p = text_frame.paragraphs[0]
-                        p.text = box_title
-                        p.font.size = Pt(16)
-                        p.font.bold = True
-                        p.space_after = Pt(8)
-                        
-                        # Box items
-                        for item in box_items:
-                            if item:  # Skip empty items
-                                p = text_frame.add_paragraph()
+                            for idx, item in enumerate(block['items']):
+                                if idx == 0:
+                                    p = text_frame.paragraphs[0]
+                                else:
+                                    p = text_frame.add_paragraph()
                                 p.text = f"• {item}"
-                                p.font.size = Pt(12)
-                                p.level = 1
-                                p.space_after = Pt(4)
-                        
-                        y_position += height + 0.3
+                                p.font.size = Pt(14)  # Slightly smaller for better fit
+                                p.level = 0
+                                p.space_after = Pt(6)  # Add space between bullet points
+                            
+                            y_position += height + 0.2  # Add buffer space
+                    
+                        elif block['type'] == 'text':
+                            # Add regular text with better sizing
+                            text_content = block.get('text', '')
+                            if not text_content:
+                                continue
+                                
+                            # Estimate height based on text length (rough calculation)
+                            estimated_lines = max(1, len(text_content) // 80 + 1)
+                            height = max(0.4, estimated_lines * 0.25 + 0.2)
+                            
+                            text_shape = slide.shapes.add_textbox(
+                                Inches(0.5), Inches(y_position), Inches(9), Inches(height)
+                            )
+                            text_frame = text_shape.text_frame
+                            text_frame.text = text_content
+                            text_frame.paragraphs[0].font.size = Pt(14)
+                            text_frame.margin_top = Inches(0.1)
+                            text_frame.margin_bottom = Inches(0.1)
+                            
+                            y_position += height + 0.2
+                    
+                        elif block['type'] == 'content_box':
+                            # Add content box with title and better sizing
+                            box_title = block.get('title', '')
+                            box_items = block.get('items', [])
+                            
+                            if not box_title and not box_items:
+                                continue
+                            
+                            # Calculate height based on content
+                            num_items = len(box_items)
+                            # Title + items + padding
+                            height = 0.4 + (num_items * 0.25) + 0.3
+                            height = max(0.8, height)
+                            
+                            box_shape = slide.shapes.add_textbox(
+                                Inches(0.7), Inches(y_position), Inches(8.5), Inches(height)
+                            )
+                            text_frame = box_shape.text_frame
+                            text_frame.margin_top = Inches(0.1)
+                            text_frame.margin_bottom = Inches(0.1)
+                            text_frame.margin_left = Inches(0.2)
+                            text_frame.margin_right = Inches(0.2)
+                            
+                            # Box title
+                            p = text_frame.paragraphs[0]
+                            p.text = box_title
+                            p.font.size = Pt(16)
+                            p.font.bold = True
+                            p.space_after = Pt(8)
+                            
+                            # Box items
+                            for item in box_items:
+                                if item:  # Skip empty items
+                                    p = text_frame.add_paragraph()
+                                    p.text = f"• {item}"
+                                    p.font.size = Pt(12)
+                                    p.level = 1
+                                    p.space_after = Pt(4)
+                            
+                            y_position += height + 0.3
+                
+                except Exception as e:
+                    logger.error(f"Error processing content blocks for slide {slide_idx + 1}: {e}")
+                    import traceback
+                    traceback.print_exc()
             
             # Save the presentation
             prs.save(filepath)
