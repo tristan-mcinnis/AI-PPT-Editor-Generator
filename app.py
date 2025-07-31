@@ -252,11 +252,13 @@ def generate_all_slide_previews(session_id, filepath):
                 # Now convert PDF to PNG using ImageMagick or similar if available
                 # First try with convert command (ImageMagick)
                 try:
+                    # ImageMagick uses %d for numbering, starting from 0
+                    # We'll use a pattern that doesn't conflict with our final naming
                     convert_cmd = [
                         'convert',
                         '-density', '150',
                         pdf_path,
-                        os.path.join(temp_dir, f"{base_name}_slide_%d.png")
+                        os.path.join(temp_dir, f"page_%d.png")
                     ]
                     result = subprocess.run(convert_cmd, capture_output=True, text=True, timeout=60)
                     
@@ -354,19 +356,32 @@ def generate_all_slide_previews(session_id, filepath):
                 except Exception as e:
                     logger.error(f"Failed to rename {png_files[0]}: {e}")
             else:
-                # Multiple files generated
+                # Multiple files generated - need to rename carefully to avoid overwrites
+                # First, rename all files to temporary names to avoid conflicts
+                temp_renames = []
                 for i, png_file in enumerate(png_files):
+                    old_path = os.path.join(temp_dir, png_file)
+                    temp_name = f"temp_{i}_{png_file}"
+                    temp_path = os.path.join(temp_dir, temp_name)
+                    try:
+                        os.rename(old_path, temp_path)
+                        temp_renames.append((temp_path, i))
+                        logger.info(f"Temporarily renamed {png_file} -> {temp_name}")
+                    except Exception as e:
+                        logger.error(f"Failed to temporarily rename {png_file}: {e}")
+                
+                # Now rename from temporary names to final names
+                for temp_path, i in temp_renames:
                     slide_num = i + 1  # 1-based slide numbering
                     new_filename = f"{base_name}_slide_{slide_num}.png"
-                    old_path = os.path.join(temp_dir, png_file)
                     new_path = os.path.join(temp_dir, new_filename)
                     
                     try:
-                        os.rename(old_path, new_path)
+                        os.rename(temp_path, new_path)
                         generated_files.append(new_filename)
-                        logger.info(f"Renamed {png_file} -> {new_filename}")
+                        logger.info(f"Renamed to final name: {new_filename}")
                     except Exception as e:
-                        logger.error(f"Failed to rename {png_file}: {e}")
+                        logger.error(f"Failed to rename to final name {new_filename}: {e}")
             
             logger.info(f"Successfully generated {len(generated_files)} slide previews: {generated_files}")
             
