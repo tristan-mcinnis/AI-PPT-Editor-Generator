@@ -240,7 +240,7 @@ def get_slide_preview(session_id, slide_index):
     
     # Check if we have cached previews for this session
     cache_key = f"{session_id}_previews"
-    if cache_key not in sessions:
+    if cache_key not in sessions or not os.path.exists(sessions.get(cache_key, '')):
         # Generate all slide previews
         preview_dir = generate_all_slide_previews(session_id, filepath)
         if preview_dir:
@@ -335,6 +335,11 @@ def generate_all_slide_previews(session_id, filepath):
             logger.info(f"Converting to PDF first: {' '.join(pdf_cmd)}")
             result = subprocess.run(pdf_cmd, capture_output=True, text=True, timeout=60)
             
+            if result.returncode != 0:
+                logger.warning(f"PDF conversion failed with return code {result.returncode}")
+                logger.warning(f"STDOUT: {result.stdout}")
+                logger.warning(f"STDERR: {result.stderr}")
+            
             if result.returncode == 0 and os.path.exists(pdf_path):
                 logger.info("PDF conversion successful, now converting to PNG")
                 
@@ -398,7 +403,9 @@ def generate_all_slide_previews(session_id, filepath):
                 result = subprocess.run(png_cmd, capture_output=True, text=True, timeout=60)
                 
                 if result.returncode != 0:
-                    logger.error(f"PNG conversion failed: {result.stderr}")
+                    logger.error(f"PNG conversion failed with return code {result.returncode}")
+                    logger.error(f"STDOUT: {result.stdout}")
+                    logger.error(f"STDERR: {result.stderr}")
                     return None
             
             # Wait for files to be written
