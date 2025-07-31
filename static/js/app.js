@@ -6,6 +6,7 @@ let currentSlideIndex = 0;
 let isExpanded = false;
 let buildMode = false;
 let selectedProvider = 'anthropic';
+let selectedOllamaModel = 'llama2';
 
 // Execute command placeholder - will be defined later
 let handleExecuteCommand;
@@ -34,6 +35,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const modeIndicator = document.getElementById('mode-indicator');
     const llmProviderSelect = document.getElementById('llm-provider');
     const providerStatus = document.getElementById('provider-status');
+    const ollamaModelSection = document.getElementById('ollama-model-section');
+    const ollamaModelSelect = document.getElementById('ollama-model');
 
     // Check if critical elements exist
     console.log('Build button found:', !!buildPresentationBtn);
@@ -508,7 +511,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     structured_text: structuredText,
-                    provider: selectedProvider
+                    provider: selectedProvider,
+                    ollama_model: selectedProvider === 'ollama' ? selectedOllamaModel : null
                 })
             });
             
@@ -583,7 +587,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     shape_id: selectedShape,
                     command: command,
                     context_mode: contextMode,
-                    provider: selectedProvider
+                    provider: selectedProvider,
+                    ollama_model: selectedProvider === 'ollama' ? selectedOllamaModel : null
                 })
             });
 
@@ -622,11 +627,19 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // Handle LLM provider change
-    function handleProviderChange(event) {
+    async function handleProviderChange(event) {
         selectedProvider = event.target.value;
         localStorage.setItem('llmProvider', selectedProvider);
         updateProviderStatus(selectedProvider);
         addConsoleMessage(`✅ Switched to ${getProviderName(selectedProvider)}`, 'info');
+        
+        // Show/hide Ollama model selection
+        if (selectedProvider === 'ollama') {
+            ollamaModelSection.style.display = 'block';
+            await loadOllamaModels();
+        } else {
+            ollamaModelSection.style.display = 'none';
+        }
     }
 
     // Update provider status message
@@ -649,6 +662,69 @@ document.addEventListener('DOMContentLoaded', function() {
             'ollama': 'Ollama (Local)'
         };
         return names[provider] || provider;
+    }
+
+    // Load available Ollama models
+    async function loadOllamaModels() {
+        try {
+            ollamaModelSelect.innerHTML = '<option value="">Loading models...</option>';
+            
+            const response = await fetch('/api/ollama/models');
+            if (!response.ok) {
+                throw new Error('Failed to fetch Ollama models');
+            }
+            
+            const data = await response.json();
+            const models = data.models || [];
+            
+            if (models.length === 0) {
+                ollamaModelSelect.innerHTML = '<option value="">No models found - install with: ollama pull llama2</option>';
+                return;
+            }
+            
+            ollamaModelSelect.innerHTML = '';
+            models.forEach(model => {
+                const option = document.createElement('option');
+                option.value = model.name;
+                option.textContent = `${model.name} (${formatSize(model.size)})`;
+                ollamaModelSelect.appendChild(option);
+            });
+            
+            // Restore previously selected model or use first available
+            const storedModel = localStorage.getItem('ollamaModel');
+            if (storedModel && models.some(m => m.name === storedModel)) {
+                ollamaModelSelect.value = storedModel;
+                selectedOllamaModel = storedModel;
+            } else if (models.length > 0) {
+                selectedOllamaModel = models[0].name;
+                ollamaModelSelect.value = selectedOllamaModel;
+            }
+            
+        } catch (error) {
+            console.error('Error loading Ollama models:', error);
+            ollamaModelSelect.innerHTML = '<option value="">Error loading models - is Ollama running?</option>';
+        }
+    }
+
+    // Format file size
+    function formatSize(bytes) {
+        const gb = bytes / (1024 * 1024 * 1024);
+        return gb >= 1 ? `${gb.toFixed(1)}GB` : `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
+    }
+
+    // Handle Ollama model selection
+    if (ollamaModelSelect) {
+        ollamaModelSelect.addEventListener('change', (event) => {
+            selectedOllamaModel = event.target.value;
+            localStorage.setItem('ollamaModel', selectedOllamaModel);
+            addConsoleMessage(`✅ Selected Ollama model: ${selectedOllamaModel}`, 'info');
+        });
+    }
+
+    // Check if provider is Ollama on load
+    if (selectedProvider === 'ollama' && ollamaModelSection) {
+        ollamaModelSection.style.display = 'block';
+        loadOllamaModels();
     }
 
 }); // End of DOMContentLoaded

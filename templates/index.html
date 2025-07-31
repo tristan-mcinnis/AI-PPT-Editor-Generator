@@ -55,6 +55,14 @@
                             <option value="ollama">Ollama (Local)</option>
                         </select>
                         <small id="provider-status" class="provider-status">Using Anthropic API</small>
+                        
+                        <!-- Ollama Model Selection (shown only when Ollama is selected) -->
+                        <div id="ollama-model-section" style="display: none; margin-top: 0.5rem;">
+                            <select id="ollama-model" class="provider-select">
+                                <option value="">Loading models...</option>
+                            </select>
+                            <small class="provider-status">Select your local Ollama model</small>
+                        </div>
                     </div>
                 </div>
                 
@@ -72,6 +80,11 @@
                                 🏗️ Build from Text
                             </button>
                             <small><strong>Click this button</strong> to enter build mode, then paste your structured text below</small>
+                            <small style="margin-top: 0.25rem;">
+                                <a href="/text-helper" target="_blank" style="color: #0366d6; text-decoration: none;">
+                                    📝 Need help formatting your text? Click here
+                                </a>
+                            </small>
                         </div>
                     </div>
                     <input type="file" id="document-file" accept=".docx,.txt" style="display: none;">

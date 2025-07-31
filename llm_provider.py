@@ -102,7 +102,7 @@ class AnthropicProvider(LLMProvider):
         except Exception as e:
             raise Exception(f"Anthropic API error: {str(e)}")
 
-def get_llm_provider(provider_type: Optional[str] = None) -> LLMProvider:
+def get_llm_provider(provider_type: Optional[str] = None, ollama_model: Optional[str] = None) -> LLMProvider:
     """Factory function to get the configured LLM provider."""
     
     # Use provided provider type or fall back to environment variable
@@ -120,7 +120,8 @@ def get_llm_provider(provider_type: Optional[str] = None) -> LLMProvider:
     
     elif provider_type == 'ollama':
         host = os.environ.get('OLLAMA_HOST', 'http://localhost:11434')
-        model = os.environ.get('OLLAMA_MODEL', 'qwen3:1.7b')
+        # Use provided model or fall back to environment variable
+        model = ollama_model or os.environ.get('OLLAMA_MODEL', 'qwen3:1.7b')
         return OllamaProvider(host, model)
     
     elif provider_type == 'anthropic':

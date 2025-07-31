@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Structured Text Helper - AI PPT Editor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        .helper-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .helper-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        .helper-section {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            border: 1px solid #e1e4e8;
+            border-radius: 6px;
+            background: #fafbfc;
+        }
+        
+        .helper-section h3 {
+            color: #0366d6;
+            margin-bottom: 1rem;
+        }
+        
+        .example-box {
+            background: #f6f8fa;
+            border: 1px solid #e1e4e8;
+            border-radius: 4px;
+            padding: 1rem;
+            margin: 1rem 0;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.875rem;
+            white-space: pre-wrap;
+        }
+        
+        .output-box {
+            background: #fff;
+            border: 2px solid #28a745;
+            border-radius: 4px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .template-generator {
+            background: white;
+            border: 2px solid #0366d6;
+            border-radius: 6px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .form-group {
+            margin: 1rem 0;
+        }
+        
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #e1e4e8;
+            border-radius: 4px;
+            font-family: inherit;
+        }
+        
+        .form-group textarea {
+            height: 100px;
+            resize: vertical;
+        }
+        
+        .slide-input {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-radius: 4px;
+        }
+        
+        .slide-input h4 {
+            margin: 0 0 0.5rem 0;
+            color: #495057;
+        }
+        
+        .btn-add {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .btn-remove {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.75rem;
+        }
+        
+        .btn-generate {
+            background: #0366d6;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-bottom: 1rem;
+            color: #0366d6;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="helper-container">
+        <a href="/" class="back-link">← Back to Main App</a>
+        
+        <div class="helper-header">
+            <h1>📝 Structured Text Helper</h1>
+            <p>Learn how to format your text for optimal AI presentation generation</p>
+        </div>
+
+        <!-- Format Guide -->
+        <div class="helper-section">
+            <h3>📖 Format Guide</h3>
+            <p>Use this simple markdown-style format to structure your presentation content:</p>
+            
+            <div class="example-box">## Slide 1
+**Your Title Here**
+- Bullet point 1
+- Bullet point 2
+- Bullet point 3
+
+## Slide 2
+**Another Title**
+Your paragraph content goes here. You can write multiple sentences and the AI will format them appropriately.
+
+- Key point A
+- Key point B
+
+## Slide 3
+**Final Slide**
+- Summary point 1
+- Summary point 2
+- Call to action</div>
+        </div>
+
+        <!-- Rules -->
+        <div class="helper-section">
+            <h3>✅ Formatting Rules</h3>
+            <ul>
+                <li><strong>## Slide X:</strong> Use this to mark the beginning of each slide</li>
+                <li><strong>**Text**:</strong> Use double asterisks for titles and important text</li>
+                <li><strong>- Bullet:</strong> Use hyphens for bullet points</li>
+                <li><strong>Paragraphs:</strong> Regular text for descriptions and explanations</li>
+                <li><strong>Blank lines:</strong> Use to separate sections for better readability</li>
+            </ul>
+        </div>
+
+        <!-- Interactive Template Generator -->
+        <div class="template-generator">
+            <h3>🛠️ Interactive Template Generator</h3>
+            <p>Fill out the form below to generate a properly formatted template:</p>
+            
+            <div class="form-group">
+                <label for="presentation-title">Presentation Title:</label>
+                <input type="text" id="presentation-title" placeholder="e.g., Quarterly Business Review">
+            </div>
+            
+            <div id="slides-container">
+                <div class="slide-input" data-slide="1">
+                    <h4>Slide 1</h4>
+                    <div class="form-group">
+                        <label>Slide Title:</label>
+                        <input type="text" class="slide-title" placeholder="e.g., Introduction">
+                    </div>
+                    <div class="form-group">
+                        <label>Content (one point per line):</label>
+                        <textarea class="slide-content" placeholder="Welcome to our quarterly review
+Key achievements this quarter
+What we'll cover today"></textarea>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="btn-add" onclick="addSlide()">+ Add Another Slide</button>
+            <button class="btn-generate" onclick="generateTemplate()">🚀 Generate Template</button>
+            
+            <div id="generated-output" style="display: none;">
+                <h4>Generated Template:</h4>
+                <div class="output-box">
+                    <textarea id="output-text" style="width: 100%; height: 300px; border: none; resize: vertical;"></textarea>
+                </div>
+                <button class="btn btn-primary" onclick="copyToClipboard()">📋 Copy to Clipboard</button>
+                <small style="display: block; margin-top: 0.5rem; color: #6c757d;">
+                    Copy this text and paste it into the main app's "Build from Text" mode
+                </small>
+            </div>
+        </div>
+
+        <!-- Examples -->
+        <div class="helper-section">
+            <h3>💡 Complete Examples</h3>
+            
+            <h4>Example 1: Business Presentation</h4>
+            <div class="example-box">## Slide 1
+**Quarterly Business Review**
+**Q3 2024 Results**
+- Revenue: $2.4M (+15% YoY)
+- New customers: 150
+- Team growth: 12 new hires
+
+## Slide 2
+**Key Achievements**
+This quarter we successfully launched our new product line and expanded into two new markets.
+
+- Product launch exceeded targets by 25%
+- New market penetration in Europe and Asia
+- Customer satisfaction score: 4.8/5
+
+## Slide 3
+**Looking Forward**
+**Q4 2024 Goals**
+- Launch mobile app
+- Reach $3M revenue
+- Expand customer support team</div>
+
+            <h4>Example 2: Technical Presentation</h4>
+            <div class="example-box">## Slide 1
+**System Architecture Overview**
+**Microservices Implementation**
+- 12 independent services
+- Docker containerization
+- Kubernetes orchestration
+
+## Slide 2
+**Performance Improvements**
+Our new architecture has delivered significant performance gains across all key metrics.
+
+- 50% faster response times
+- 99.9% uptime achieved
+- 30% reduction in infrastructure costs
+
+## Slide 3
+**Next Steps**
+**Roadmap for Q1 2025**
+- Implement service mesh
+- Add monitoring dashboard
+- Scale to handle 10x traffic</div>
+        </div>
+
+        <div class="helper-section">
+            <h3>⚠️ Common Mistakes to Avoid</h3>
+            <ul>
+                <li>❌ Don't forget the "## Slide X" markers</li>
+                <li>❌ Don't use single asterisks (*text*) - use double (**text**)</li>
+                <li>❌ Don't mix different bullet styles (stick to hyphens)</li>
+                <li>❌ Don't make slides too long (5-7 bullet points max)</li>
+                <li>❌ Don't forget blank lines between sections</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        let slideCount = 1;
+
+        function addSlide() {
+            slideCount++;
+            const container = document.getElementById('slides-container');
+            const slideDiv = document.createElement('div');
+            slideDiv.className = 'slide-input';
+            slideDiv.setAttribute('data-slide', slideCount);
+            slideDiv.innerHTML = `
+                <h4>Slide ${slideCount} <button class="btn-remove" onclick="removeSlide(this)">Remove</button></h4>
+                <div class="form-group">
+                    <label>Slide Title:</label>
+                    <input type="text" class="slide-title" placeholder="e.g., Key Points">
+                </div>
+                <div class="form-group">
+                    <label>Content (one point per line):</label>
+                    <textarea class="slide-content" placeholder="Point 1
+Point 2
+Point 3"></textarea>
+                </div>
+            `;
+            container.appendChild(slideDiv);
+        }
+
+        function removeSlide(button) {
+            if (document.querySelectorAll('.slide-input').length > 1) {
+                button.closest('.slide-input').remove();
+            }
+        }
+
+        function generateTemplate() {
+            const title = document.getElementById('presentation-title').value || 'My Presentation';
+            const slides = document.querySelectorAll('.slide-input');
+            let template = '';
+
+            slides.forEach((slide, index) => {
+                const slideNum = index + 1;
+                const slideTitle = slide.querySelector('.slide-title').value || `Slide ${slideNum}`;
+                const slideContent = slide.querySelector('.slide-content').value || '';
+
+                template += `## Slide ${slideNum}\n`;
+                template += `**${slideTitle}**\n`;
+                
+                if (slideContent.trim()) {
+                    const lines = slideContent.split('\n').filter(line => line.trim());
+                    if (lines.length === 1) {
+                        // Single line - treat as paragraph
+                        template += `${lines[0].trim()}\n`;
+                    } else {
+                        // Multiple lines - treat as bullet points
+                        lines.forEach(line => {
+                            if (line.trim()) {
+                                template += `- ${line.trim()}\n`;
+                            }
+                        });
+                    }
+                }
+                template += '\n';
+            });
+
+            document.getElementById('output-text').value = template;
+            document.getElementById('generated-output').style.display = 'block';
+            document.getElementById('generated-output').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function copyToClipboard() {
+            const outputText = document.getElementById('output-text');
+            outputText.select();
+            document.execCommand('copy');
+            
+            const button = event.target;
+            const originalText = button.textContent;
+            button.textContent = '✅ Copied!';
+            button.style.backgroundColor = '#28a745';
+            
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.style.backgroundColor = '#0366d6';
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
