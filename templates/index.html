@@ -45,6 +45,19 @@
             </div>
             <div class="panel-content">
                 <!-- Action Buttons Section -->
+                <!-- LLM Provider Selection -->
+                <div class="console-section">
+                    <h3>AI Provider</h3>
+                    <div class="llm-provider-select">
+                        <select id="llm-provider" class="provider-select">
+                            <option value="anthropic">Anthropic (Claude)</option>
+                            <option value="openai">OpenAI (GPT-4)</option>
+                            <option value="ollama">Ollama (Local)</option>
+                        </select>
+                        <small id="provider-status" class="provider-status">Using Anthropic API</small>
+                    </div>
+                </div>
+                
                 <div class="console-section">
                     <h3>Create or Import Content</h3>
                     <div class="button-group">

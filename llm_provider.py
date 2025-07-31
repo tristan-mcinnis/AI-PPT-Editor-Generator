@@ -102,11 +102,14 @@ class AnthropicProvider(LLMProvider):
         except Exception as e:
             raise Exception(f"Anthropic API error: {str(e)}")
 
-def get_llm_provider() -> LLMProvider:
+def get_llm_provider(provider_type: Optional[str] = None) -> LLMProvider:
     """Factory function to get the configured LLM provider."""
     
-    # Check environment variables for configuration
-    provider_type = os.environ.get('LLM_PROVIDER', 'anthropic').lower()
+    # Use provided provider type or fall back to environment variable
+    if provider_type is None:
+        provider_type = os.environ.get('LLM_PROVIDER', 'anthropic').lower()
+    else:
+        provider_type = provider_type.lower()
     
     if provider_type == 'openai':
         api_key = os.environ.get('OPENAI_API_KEY')

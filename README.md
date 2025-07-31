@@ -7,7 +7,7 @@ SlideSpark AI is a powerful cross-platform application that acts as an intellige
 - **Draft-to-Deck**: Convert text documents (.docx, .txt) into structured presentations
 - **AI-Powered Editing**: Use natural language commands to edit presentations
 - **Three-Panel Interface**: Structure explorer, AI command console, and live visual preview
-- **Multi-Provider LLM Support**: Works with OpenAI, Anthropic, and Ollama
+- **Multi-Provider LLM Support**: Choose between OpenAI, Anthropic, and Ollama in real-time
 - **Context-Aware Editing**: Choose between local (single shape) or global (entire presentation) context
 
 ## Installation
@@ -39,28 +39,29 @@ cp .env.example .env
 
 ### LLM Provider Setup
 
-SlideSpark AI supports multiple LLM providers. Configure your preferred provider in the `.env` file:
+SlideSpark AI supports multiple LLM providers. You can switch between providers in real-time using the dropdown in the AI Command Console.
+
+Configure your API keys in the `.env` file:
 
 #### Anthropic (Default)
 ```
-LLM_PROVIDER=anthropic
 ANTHROPIC_API_KEY=your-api-key-here
 ANTHROPIC_MODEL=claude-sonnet-4-20250514
 ```
 
 #### OpenAI
 ```
-LLM_PROVIDER=openai
 OPENAI_API_KEY=your-api-key-here
 OPENAI_MODEL=gpt-4o
 ```
 
 #### Ollama (Local)
 ```
-LLM_PROVIDER=ollama
 OLLAMA_HOST=http://localhost:11434
 OLLAMA_MODEL=qwen3:1.7b
 ```
+
+Note: The `LLM_PROVIDER` environment variable sets the default provider, but users can change it anytime from the UI.
 
 ### Slide Preview (Optional)
 
@@ -81,17 +82,21 @@ python app.py
 
 2. Open your browser to `http://localhost:5030`
 
-3. **Upload a Presentation**:
+3. **Choose AI Provider** (Optional):
+   - Select your preferred AI provider from the dropdown in the AI Command Console
+   - The app remembers your choice for future sessions
+
+4. **Upload a Presentation**:
    - Click "Upload Presentation" in the Structure Explorer panel
    - Select a `.pptx` file
 
-4. **Edit with AI**:
+5. **Edit with AI**:
    - Select a shape in the Structure Explorer
    - Choose context mode (Local or Global)
    - Type your command in the AI Command Console
    - Click "Execute" to apply changes
 
-5. **Create from Document**:
+6. **Create from Document**:
    - Click "Ingest from Document" in the AI Command Console
    - Upload a `.docx` or `.txt` file
    - Review the proposed structure

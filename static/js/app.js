@@ -5,6 +5,7 @@ let selectedShape = null;
 let currentSlideIndex = 0;
 let isExpanded = false;
 let buildMode = false;
+let selectedProvider = 'anthropic';
 
 // Execute command placeholder - will be defined later
 let handleExecuteCommand;
@@ -31,6 +32,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const editModeSection = document.getElementById('edit-mode-section');
     const commandSectionTitle = document.getElementById('command-section-title');
     const modeIndicator = document.getElementById('mode-indicator');
+    const llmProviderSelect = document.getElementById('llm-provider');
+    const providerStatus = document.getElementById('provider-status');
 
     // Check if critical elements exist
     console.log('Build button found:', !!buildPresentationBtn);
@@ -73,6 +76,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         if (nextSlideBtn) {
             nextSlideBtn.addEventListener('click', () => navigateSlide(1));
+        }
+        if (llmProviderSelect) {
+            llmProviderSelect.addEventListener('change', handleProviderChange);
+            // Set initial provider from stored value
+            const storedProvider = localStorage.getItem('llmProvider') || 'anthropic';
+            llmProviderSelect.value = storedProvider;
+            selectedProvider = storedProvider;
+            updateProviderStatus(storedProvider);
         }
     } catch (error) {
         console.error('Error setting up event listeners:', error);
@@ -496,7 +507,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    structured_text: structuredText
+                    structured_text: structuredText,
+                    provider: selectedProvider
                 })
             });
             
@@ -570,7 +582,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: JSON.stringify({
                     shape_id: selectedShape,
                     command: command,
-                    context_mode: contextMode
+                    context_mode: contextMode,
+                    provider: selectedProvider
                 })
             });
 
@@ -607,5 +620,35 @@ document.addEventListener('DOMContentLoaded', function() {
             await originalExecuteCommand();
         }
     };
+
+    // Handle LLM provider change
+    function handleProviderChange(event) {
+        selectedProvider = event.target.value;
+        localStorage.setItem('llmProvider', selectedProvider);
+        updateProviderStatus(selectedProvider);
+        addConsoleMessage(`✅ Switched to ${getProviderName(selectedProvider)}`, 'info');
+    }
+
+    // Update provider status message
+    function updateProviderStatus(provider) {
+        const statusMessages = {
+            'anthropic': 'Using Anthropic API (Claude)',
+            'openai': 'Using OpenAI API (GPT-4)',
+            'ollama': 'Using Ollama (Local Model)'
+        };
+        if (providerStatus) {
+            providerStatus.textContent = statusMessages[provider] || 'Unknown provider';
+        }
+    }
+
+    // Get friendly provider name
+    function getProviderName(provider) {
+        const names = {
+            'anthropic': 'Anthropic (Claude)',
+            'openai': 'OpenAI (GPT-4)',
+            'ollama': 'Ollama (Local)'
+        };
+        return names[provider] || provider;
+    }
 
 }); // End of DOMContentLoaded

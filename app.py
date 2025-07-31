@@ -395,6 +395,7 @@ def edit_presentation(session_id):
     shape_id = data.get('shape_id')
     command = data.get('command')
     context_mode = data.get('context_mode', 'local')
+    provider = data.get('provider', 'anthropic')
     
     if not shape_id or not command:
         return jsonify({'error': 'Missing required parameters'}), 400
@@ -402,8 +403,8 @@ def edit_presentation(session_id):
     filepath = sessions[session_id]['filepath']
     structure = sessions[session_id]['structure']
     
-    # Get LLM provider
-    llm = get_llm_provider()
+    # Get LLM provider with the selected provider
+    llm = get_llm_provider(provider)
     
     # Perform edit
     engine = PresentationEngine()
@@ -463,16 +464,18 @@ def build_presentation(session_id):
     try:
         data = request.json
         structured_text = data.get('structured_text', '')
+        provider = data.get('provider', 'anthropic')
         
         logger.info(f"Structured text length: {len(structured_text)}")
         logger.info(f"Structured text preview: {structured_text[:100]}...")
+        logger.info(f"Using provider: {provider}")
         
         if not structured_text:
             logger.error("No structured text provided")
             return jsonify({'error': 'No structured text provided'}), 400
         
-        # Get LLM provider
-        llm = get_llm_provider()
+        # Get LLM provider with the selected provider
+        llm = get_llm_provider(provider)
         
         # Use presentation engine to build from structured text
         engine = PresentationEngine()

@@ -363,6 +363,42 @@ body {
     pointer-events: none;
 }
 
+/* LLM Provider Selection */
+.llm-provider-select {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.provider-select {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #e1e4e8;
+    border-radius: 6px;
+    background-color: #fff;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.provider-select:hover {
+    border-color: #0366d6;
+}
+
+.provider-select:focus {
+    outline: none;
+    border-color: #0366d6;
+    box-shadow: 0 0 0 3px rgba(3, 102, 214, 0.1);
+}
+
+.provider-status {
+    color: #6c757d;
+    font-size: 0.75rem;
+    margin-left: 0.25rem;
+    display: block;
+}
+
 /* Responsive adjustments */
 @media (max-width: 1200px) {
     .app-container {
