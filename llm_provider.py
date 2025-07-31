@@ -3,9 +3,90 @@ import os
 import json
 import requests
 import logging
+import re
 from typing import Optional
 
 logger = logging.getLogger(__name__)
+
+def extract_json_from_text(text: str) -> str:
+    """Extract JSON from text that might contain other content."""
+    if not text:
+        return text
+    
+    # Remove common prefixes that models might add
+    text = text.strip()
+    prefixes_to_remove = ['<think>', '</think>', '```json', '```JSON', '```', 'json', 'JSON']
+    for prefix in prefixes_to_remove:
+        if text.startswith(prefix):
+            text = text[len(prefix):].strip()
+        if text.endswith(prefix):
+            text = text[:-len(prefix)].strip()
+    
+    # First try to parse as-is
+    try:
+        json.loads(text)
+        return text
+    except:
+        pass
+    
+    # Find the largest valid JSON object
+    json_candidates = []
+    
+    # Try to find JSON between curly braces (greedy)
+    brace_level = 0
+    start_idx = -1
+    
+    for i, char in enumerate(text):
+        if char == '{':
+            if brace_level == 0:
+                start_idx = i
+            brace_level += 1
+        elif char == '}':
+            brace_level -= 1
+            if brace_level == 0 and start_idx != -1:
+                candidate = text[start_idx:i+1]
+                try:
+                    json.loads(candidate)
+                    json_candidates.append(candidate)
+                except:
+                    pass
+    
+    # Return the longest valid JSON (likely the most complete)
+    if json_candidates:
+        return max(json_candidates, key=len)
+    
+    # Try regex patterns as fallback
+    patterns = [
+        r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}',  # Nested braces pattern
+        r'\{.*?\}',  # Simple non-greedy
+        r'\{.*\}'    # Greedy
+    ]
+    
+    for pattern in patterns:
+        matches = re.findall(pattern, text, re.DOTALL)
+        for match in matches:
+            try:
+                json.loads(match)
+                return match
+            except:
+                continue
+    
+    # Last resort: try from first { to end of string
+    start_idx = text.find('{')
+    if start_idx != -1:
+        potential_json = text[start_idx:]
+        # Remove any trailing text after last }
+        last_brace = potential_json.rfind('}')
+        if last_brace != -1:
+            potential_json = potential_json[:last_brace+1]
+            try:
+                json.loads(potential_json)
+                return potential_json
+            except:
+                pass
+    
+    # If all else fails, return original text
+    return text
 
 class LLMProvider(ABC):
     @abstractmethod
@@ -80,8 +161,15 @@ class OllamaProvider(LLMProvider):
 
     def generate_response(self, prompt: str) -> str:
         try:
-            # Add system context to prompt
-            full_prompt = "You are a helpful assistant specializing in presentation creation and editing. When asked to generate presentation plans, always return valid JSON.\n\n" + prompt
+            # Add system context to prompt - be very explicit about JSON for Ollama
+            system_prompt = """You are a helpful assistant specializing in presentation creation and editing. 
+
+CRITICAL: You must ONLY return valid JSON. Do not include any explanations, reasoning, or other text. 
+Do not use <think> tags or any other formatting. 
+Start your response immediately with { and end with }.
+Return ONLY the JSON object, nothing else."""
+            
+            full_prompt = system_prompt + "\n\n" + prompt
             
             # For longer prompts, use a longer timeout and warn up the model
             estimated_timeout = min(max(60, len(full_prompt) // 100), 180)  # 60-180 seconds based on prompt length
@@ -99,11 +187,14 @@ class OllamaProvider(LLMProvider):
                 "model": self.model,
                 "prompt": full_prompt,
                 "stream": False,
+                "format": "json",  # Try to use JSON format if supported
                 "options": {
-                    "temperature": 0.7,
+                    "temperature": 0.3,  # Lower temperature for more consistent JSON
                     "num_predict": 3000,
                     "top_k": 40,
-                    "top_p": 0.9
+                    "top_p": 0.9,
+                    "stop": ["```", "```json", "```JSON"],  # Stop at code blocks
+                    "repeat_penalty": 1.1
                 }
             }
             
@@ -131,8 +222,13 @@ class OllamaProvider(LLMProvider):
             response_text = result['response']
             logger.info(f"Generated response length: {len(response_text)}")
             logger.info(f"Response preview: {response_text[:200]}...")
+            
+            # Extract JSON from the response for Ollama
+            cleaned_response = extract_json_from_text(response_text)
+            logger.info(f"Cleaned response length: {len(cleaned_response)}")
+            logger.info(f"Cleaned response preview: {cleaned_response[:200]}...")
                 
-            return response_text
+            return cleaned_response
             
         except requests.exceptions.Timeout:
             raise Exception(f"Ollama request timed out after {estimated_timeout}s. Try using a smaller/faster model or reduce your content length.")
