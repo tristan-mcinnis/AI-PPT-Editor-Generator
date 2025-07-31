@@ -164,25 +164,38 @@ class OllamaProvider(LLMProvider):
             # Add system context to prompt - balance between JSON requirement and content generation
             system_prompt = """You are a helpful assistant specializing in presentation creation and editing. 
 
-IMPORTANT: Your response must be valid JSON format. Generate the complete JSON response with all the required content.
+IMPORTANT: Your response must be a valid JSON ARRAY (not an object). Generate the complete JSON response with all the required content.
 
-Format your response as a JSON object with the structure requested in the prompt. Make sure to:
-1. Include all slides and content from the input
-2. Follow the exact JSON schema required
-3. Provide complete, detailed content for each slide
-4. Start with { and end with }
+You must return a JSON array with this exact structure:
 
-Example format:
-{
-  "slides": [
-    {
-      "slide_number": 1,
-      "title": "Slide Title",
-      "content": ["Point 1", "Point 2", "Point 3"],
-      "layout": "title_and_content"
-    }
-  ]
-}"""
+[
+  {
+    "slide_number": 1,
+    "title": "Slide title text",
+    "content_blocks": [
+      {
+        "type": "bullets",
+        "items": ["Bullet 1", "Bullet 2", "Bullet 3"]
+      },
+      {
+        "type": "text", 
+        "text": "Regular paragraph text"
+      },
+      {
+        "type": "content_box",
+        "title": "Box Title",
+        "items": ["Item 1", "Item 2"]
+      }
+    ]
+  }
+]
+
+CRITICAL REQUIREMENTS:
+1. Start with [ and end with ] (JSON array, not object)
+2. Each slide must have: slide_number, title, content_blocks
+3. Content blocks must have a "type" field (bullets, text, or content_box)
+4. Include all slides and content from the input
+5. Generate complete, detailed content for each slide"""
             
             full_prompt = system_prompt + "\n\n" + prompt
             
