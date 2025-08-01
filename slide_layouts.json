@@ -1,0 +1,880 @@
+{
+  "layouts": [
+    {
+      "id": "title_slide",
+      "name": "Title Slide",
+      "description": "Main title slide with subtitle, typically used for presentation opening",
+      "elements": [
+        {
+          "type": "title",
+          "position": {"x": 0.5, "y": 2.5, "width": 9, "height": 1.5},
+          "style": {"fontSize": 44, "bold": true, "align": "center"}
+        },
+        {
+          "type": "subtitle",
+          "position": {"x": 1, "y": 4.5, "width": 8, "height": 1},
+          "style": {"fontSize": 24, "align": "center", "color": "#666666"}
+        }
+      ],
+      "contentTriggers": ["presentation title", "main title", "cover slide", "opening slide"]
+    },
+    {
+      "id": "section_divider",
+      "name": "Section Divider",
+      "description": "Bold section divider with large centered text",
+      "elements": [
+        {
+          "type": "section_title",
+          "position": {"x": 0.5, "y": 3, "width": 9, "height": 1.5},
+          "style": {"fontSize": 48, "bold": true, "align": "center"}
+        }
+      ],
+      "contentTriggers": ["section", "chapter", "part", "divider"]
+    },
+    {
+      "id": "content_with_title",
+      "name": "Content with Title",
+      "description": "Standard slide with title and bullet points",
+      "elements": [
+        {
+          "type": "title",
+          "position": {"x": 0.5, "y": 0.3, "width": 9, "height": 0.8},
+          "style": {"fontSize": 32, "bold": true}
+        },
+        {
+          "type": "content",
+          "position": {"x": 0.5, "y": 1.5, "width": 9, "height": 5.5},
+          "style": {"fontSize": 18, "bulletPoints": true}
+        }
+      ],
+      "contentTriggers": ["bullet points", "list", "key points", "overview"]
+    },
+    {
+      "id": "two_content_boxes",
+      "name": "Two Content Boxes",
+      "description": "Side-by-side content boxes for comparison",
+      "elements": [
+        {
+          "type": "title",
+          "position": {"x": 0.5, "y": 0.3, "width": 9, "height": 0.8},
+          "style": {"fontSize": 32, "bold": true}
+        },
+        {
+          "type": "content_box",
+          "position": {"x": 0.5, "y": 1.5, "width": 4.25, "height": 5},
+          "style": {"fontSize": 16, "bulletPoints": true, "boxTitle": true}
+        },
+        {
+          "type": "content_box",
+          "position": {"x": 5.25, "y": 1.5, "width": 4.25, "height": 5},
+          "style": {"fontSize": 16, "bulletPoints": true, "boxTitle": true}
+        }
+      ],
+      "contentTriggers": ["comparison", "versus", "vs", "differences", "pros and cons", "two options"]
+    },
+    {
+      "id": "picture_right",
+      "name": "Picture Right",
+      "description": "Content on left, large image on right",
+      "elements": [
+        {
+          "type": "title",
+          "position": {"x": 0.5, "y": 0.3, "width": 9, "height": 0.8},
+          "style": {"fontSize": 32, "bold": true}
+        },
+        {
+          "type": "content",
+          "position": {"x": 0.5, "y": 1.5, "width": 4.5, "height": 5},
+          "style": {"fontSize": 18, "bulletPoints": true}
+        },
+        {
+          "type": "picture_placeholder",
+          "position": {"x": 5.5, "y": 1.5, "width": 4, "height": 5},
+          "style": {"border": true}
+        }
+      ],
+      "contentTriggers": ["image", "photo", "picture", "visual", "illustration", "diagram"]
+    },
+    {
+      "id": "picture_left",
+      "name": "Picture Left",
+      "description": "Large image on left, content on right",
+      "elements": [
+        {
+          "type": "title",
+          "position": {"x": 0.5, "y": 0.3, "width": 9, "height": 0.8},
+          "style": {"fontSize": 32, "bold": true}
+        },
+        {
+          "type": "picture_placeholder",
+          "position": {"x": 0.5, "y": 1.5, "width": 4, "height": 5},
+          "style": {"border": true}
+        },
+        {
+          "type": "content",
+          "position": {"x": 5, "y": 1.5, "width": 4.5, "height": 5},
+          "style": {"fontSize": 18, "bulletPoints": true}
+        }
+      ],
+      "contentTriggers": ["showcase", "feature", "highlight image"]
+    },
+    {
+      "id": "quote",
+      "name": "Quote",
+      "description": "Large centered quote with attribution",
+      "elements": [
+        {
+          "type": "quote_text",
+          "position": {"x": 1, "y": 2, "width": 8, "height": 3},
+          "style": {"fontSize": 28, "italic": true, "align": "center"}
+        },
+        {
+          "type": "attribution",
+          "position": {"x": 2, "y": 5.5, "width": 6, "height": 0.8},
+          "style": {"fontSize": 18, "align": "right", "color": "#666666"}
+        }
+      ],
+      "contentTriggers": ["quote", "testimonial", "said", "according to"]
+    },
+    {
+      "id": "big_number",
+      "name": "Big Number",
+      "description": "Large statistic or number with supporting text",
+      "elements": [
+        {
+          "type": "big_number",
+          "position": {"x": 2, "y": 2, "width": 6, "height": 2},
+          "style": {"fontSize": 72, "bold": true, "align": "center", "color": "#0066CC"}
+        },
+        {
+          "type": "supporting_text",
+          "position": {"x": 1, "y": 4.5, "width": 8, "height": 1.5},
+          "style": {"fontSize": 24, "align": "center"}
+        }
+      ],
+      "contentTriggers": ["statistic", "percentage", "%", "number", "metric", "KPI"]
+    },
+    {
+      "id": "three_columns",
+      "name": "Three Columns",
+      "description": "Three equal columns for parallel content",
+      "elements": [
+        {
+          "type": "title",
+          "position": {"x": 0.5, "y": 0.3, "width": 9, "height": 0.8},
+          "style": {"fontSize": 32, "bold": true}
+        },
+        {
+          "type": "column",
+          "position": {"x": 0.5, "y": 1.5, "width": 2.8, "height": 5},
+          "style": {"fontSize": 14, "columnTitle": true}
+        },
+        {
+          "type": "column",
+          "position": {"x": 3.6, "y": 1.5, "width": 2.8, "height": 5},
+          "style": {"fontSize": 14, "columnTitle": true}
+        },
+        {
+          "type": "column",
+          "position": {"x": 6.7, "y": 1.5, "width": 2.8, "height": 5},
+          "style": {"fontSize": 14, "columnTitle": true}
+        }
+      ],
+      "contentTriggers": ["three", "trilogy", "triplet", "three options", "three categories"]
+    },
+    {
+      "id": "timeline",
+      "name": "Timeline",
+      "description": "Horizontal timeline with milestones",
+      "elements": [
+        {
+          "type": "title",
+          "position": {"x": 0.5, "y": 0.3, "width": 9, "height": 0.8},
+          "style": {"fontSize": 32, "bold": true}
+        },
+        {
+          "type": "timeline",
+          "position": {"x": 0.5, "y": 3, "width": 9, "height": 3},
+          "style": {"timelineStyle": "horizontal"}
+        }
+      ],
+      "contentTriggers": ["timeline", "roadmap", "milestones", "phases", "stages", "journey"]
+    },
+    {
+      "id": "process_flow",
+      "name": "Process Flow",
+      "description": "Step-by-step process with arrows",
+      "elements": [
+        {
+          "type": "title",
+          "position": {"x": 0.5, "y": 0.3, "width": 9, "height": 0.8},
+          "style": {"fontSize": 32, "bold": true}
+        },
+        {
+          "type": "process_flow",
+          "position": {"x": 0.5, "y": 2, "width": 9, "height": 4},
+          "style": {"flowDirection": "horizontal", "showArrows": true}
+        }
+      ],
+      "contentTriggers": ["process", "workflow", "steps", "procedure", "how to", "flow"]
+    },
+    {
+      "id": "table",
+      "name": "Table",
+      "description": "Data table with headers",
+      "elements": [
+        {
+          "type": "title",
+          "position": {"x": 0.5, "y": 0.3, "width": 9, "height": 0.8},
+          "style": {"fontSize": 32, "bold": true}
+        },
+        {
+          "type": "table",
+          "position": {"x": 0.5, "y": 1.5, "width": 9, "height": 5},
+          "style": {"headerRow": true, "alternatingRows": true}
+        }
+      ],
+      "contentTriggers": ["table", "data", "grid", "matrix", "spreadsheet"]
+    },
+    {
+      "id": "icon_list",
+      "name": "Icon List",
+      "description": "List items with icon placeholders",
+      "elements": [
+        {
+          "type": "title",
+          "position": {"x": 0.5, "y": 0.3, "width": 9, "height": 0.8},
+          "style": {"fontSize": 32, "bold": true}
+        },
+        {
+          "type": "icon_list",
+          "position": {"x": 0.5, "y": 1.5, "width": 9, "height": 5},
+          "style": {"iconSize": 0.5, "fontSize": 16}
+        }
+      ],
+      "contentTriggers": ["features", "benefits", "services", "offerings", "capabilities"]
+    },
+    {
+      "id": "call_to_action",
+      "name": "Call to Action",
+      "description": "Bold call-to-action with centered content",
+      "elements": [
+        {
+          "type": "cta_title",
+          "position": {"x": 1, "y": 2, "width": 8, "height": 1.5},
+          "style": {"fontSize": 40, "bold": true, "align": "center"}
+        },
+        {
+          "type": "cta_content",
+          "position": {"x": 1.5, "y": 4, "width": 7, "height": 2},
+          "style": {"fontSize": 20, "align": "center"}
+        }
+      ],
+      "contentTriggers": ["call to action", "next steps", "get started", "contact", "summary", "conclusion"]
+    },
+    {
+      "id": "blank_content",
+      "name": "Blank Content",
+      "description": "Flexible layout for custom content",
+      "elements": [
+        {
+          "type": "title",
+          "position": {"x": 0.5, "y": 0.3, "width": 9, "height": 0.8},
+          "style": {"fontSize": 32, "bold": true}
+        },
+        {
+          "type": "flexible_content",
+          "position": {"x": 0.5, "y": 1.5, "width": 9, "height": 5.5},
+          "style": {"fontSize": 18}
+        }
+      ],
+      "contentTriggers": ["default", "general", "other"]
+    },
+    {
+      "id": "two_column_text",
+      "name": "Two Column Text",
+      "description": "Two equal columns of text content",
+      "elements": [
+        {
+          "type": "title",
+          "position": {"x": 0.5, "y": 0.3, "width": 9, "height": 0.8},
+          "style": {"fontSize": 32, "bold": true}
+        },
+        {
+          "type": "text_column",
+          "position": {"x": 0.5, "y": 1.5, "width": 4.25, "height": 5.5},
+          "style": {"fontSize": 16, "bulletPoints": true}
+        },
+        {
+          "type": "text_column",
+          "position": {"x": 5.25, "y": 1.5, "width": 4.25, "height": 5.5},
+          "style": {"fontSize": 16, "bulletPoints": true}
+        }
+      ],
+      "contentTriggers": ["two sections", "dual content", "split content", "parallel points"]
+    },
+    {
+      "id": "four_content_grid",
+      "name": "Four Content Grid",
+      "description": "2x2 grid of content boxes",
+      "elements": [
+        {
+          "type": "title",
+          "position": {"x": 0.5, "y": 0.3, "width": 9, "height": 0.8},
+          "style": {"fontSize": 32, "bold": true}
+        },
+        {
+          "type": "grid_box",
+          "position": {"x": 0.5, "y": 1.5, "width": 4.25, "height": 2.5},
+          "style": {"fontSize": 14, "boxTitle": true}
+        },
+        {
+          "type": "grid_box",
+          "position": {"x": 5.25, "y": 1.5, "width": 4.25, "height": 2.5},
+          "style": {"fontSize": 14, "boxTitle": true}
+        },
+        {
+          "type": "grid_box",
+          "position": {"x": 0.5, "y": 4.3, "width": 4.25, "height": 2.5},
+          "style": {"fontSize": 14, "boxTitle": true}
+        },
+        {
+          "type": "grid_box",
+          "position": {"x": 5.25, "y": 4.3, "width": 4.25, "height": 2.5},
+          "style": {"fontSize": 14, "boxTitle": true}
+        }
+      ],
+      "contentTriggers": ["four categories", "quadrants", "matrix", "four aspects", "4x analysis"]
+    },
+    {
+      "id": "content_with_sidebar",
+      "name": "Content with Sidebar",
+      "description": "Main content with a narrow sidebar",
+      "elements": [
+        {
+          "type": "title",
+          "position": {"x": 0.5, "y": 0.3, "width": 9, "height": 0.8},
+          "style": {"fontSize": 32, "bold": true}
+        },
+        {
+          "type": "main_content",
+          "position": {"x": 0.5, "y": 1.5, "width": 6.5, "height": 5.5},
+          "style": {"fontSize": 18, "bulletPoints": true}
+        },
+        {
+          "type": "sidebar",
+          "position": {"x": 7.2, "y": 1.5, "width": 2.3, "height": 5.5},
+          "style": {"fontSize": 14, "backgroundColor": "#f0f0f0"}
+        }
+      ],
+      "contentTriggers": ["sidebar", "main with notes", "content plus", "with context"]
+    },
+    {
+      "id": "three_column_images",
+      "name": "Three Column Images",
+      "description": "Three columns with images and captions",
+      "elements": [
+        {
+          "type": "title",
+          "position": {"x": 0.5, "y": 0.3, "width": 9, "height": 0.8},
+          "style": {"fontSize": 32, "bold": true}
+        },
+        {
+          "type": "image_column",
+          "position": {"x": 0.5, "y": 1.5, "width": 2.8, "height": 5},
+          "style": {"imageHeight": 3, "captionHeight": 2}
+        },
+        {
+          "type": "image_column",
+          "position": {"x": 3.6, "y": 1.5, "width": 2.8, "height": 5},
+          "style": {"imageHeight": 3, "captionHeight": 2}
+        },
+        {
+          "type": "image_column",
+          "position": {"x": 6.7, "y": 1.5, "width": 2.8, "height": 5},
+          "style": {"imageHeight": 3, "captionHeight": 2}
+        }
+      ],
+      "contentTriggers": ["product showcase", "three examples", "visual comparison", "gallery"]
+    },
+    {
+      "id": "split_header",
+      "name": "Split Header",
+      "description": "Split header with two sections and content below",
+      "elements": [
+        {
+          "type": "header_left",
+          "position": {"x": 0.5, "y": 0.3, "width": 4.5, "height": 1},
+          "style": {"fontSize": 28, "bold": true, "backgroundColor": "#e8f4f8"}
+        },
+        {
+          "type": "header_right",
+          "position": {"x": 5.0, "y": 0.3, "width": 4.5, "height": 1},
+          "style": {"fontSize": 28, "bold": true, "backgroundColor": "#f8e8e8"}
+        },
+        {
+          "type": "content",
+          "position": {"x": 0.5, "y": 1.8, "width": 9, "height": 5},
+          "style": {"fontSize": 18}
+        }
+      ],
+      "contentTriggers": ["split topic", "dual focus", "two themes", "contrasting ideas"]
+    },
+    {
+      "id": "five_columns",
+      "name": "Five Columns",
+      "description": "Five equal columns for parallel content",
+      "elements": [
+        {
+          "type": "title",
+          "position": {"x": 0.5, "y": 0.3, "width": 9, "height": 0.8},
+          "style": {"fontSize": 32, "bold": true}
+        },
+        {
+          "type": "narrow_column",
+          "position": {"x": 0.5, "y": 1.5, "width": 1.6, "height": 5},
+          "style": {"fontSize": 12, "columnTitle": true}
+        },
+        {
+          "type": "narrow_column",
+          "position": {"x": 2.3, "y": 1.5, "width": 1.6, "height": 5},
+          "style": {"fontSize": 12, "columnTitle": true}
+        },
+        {
+          "type": "narrow_column",
+          "position": {"x": 4.1, "y": 1.5, "width": 1.6, "height": 5},
+          "style": {"fontSize": 12, "columnTitle": true}
+        },
+        {
+          "type": "narrow_column",
+          "position": {"x": 5.9, "y": 1.5, "width": 1.6, "height": 5},
+          "style": {"fontSize": 12, "columnTitle": true}
+        },
+        {
+          "type": "narrow_column",
+          "position": {"x": 7.7, "y": 1.5, "width": 1.6, "height": 5},
+          "style": {"fontSize": 12, "columnTitle": true}
+        }
+      ],
+      "contentTriggers": ["five steps", "five pillars", "five categories", "5-point plan"]
+    },
+    {
+      "id": "picture_grid_2x2",
+      "name": "Picture Grid 2x2",
+      "description": "Four images in a 2x2 grid with captions",
+      "elements": [
+        {
+          "type": "title",
+          "position": {"x": 0.5, "y": 0.3, "width": 9, "height": 0.8},
+          "style": {"fontSize": 32, "bold": true}
+        },
+        {
+          "type": "image_with_caption",
+          "position": {"x": 0.5, "y": 1.5, "width": 4.25, "height": 2.5},
+          "style": {"captionPosition": "bottom"}
+        },
+        {
+          "type": "image_with_caption",
+          "position": {"x": 5.25, "y": 1.5, "width": 4.25, "height": 2.5},
+          "style": {"captionPosition": "bottom"}
+        },
+        {
+          "type": "image_with_caption",
+          "position": {"x": 0.5, "y": 4.3, "width": 4.25, "height": 2.5},
+          "style": {"captionPosition": "bottom"}
+        },
+        {
+          "type": "image_with_caption",
+          "position": {"x": 5.25, "y": 4.3, "width": 4.25, "height": 2.5},
+          "style": {"captionPosition": "bottom"}
+        }
+      ],
+      "contentTriggers": ["image gallery", "visual examples", "photo grid", "four visuals"]
+    },
+    {
+      "id": "left_content_right_image",
+      "name": "Left Content Right Image",
+      "description": "Content on left (60%) with large image on right (40%)",
+      "elements": [
+        {
+          "type": "title",
+          "position": {"x": 0.5, "y": 0.3, "width": 9, "height": 0.8},
+          "style": {"fontSize": 32, "bold": true}
+        },
+        {
+          "type": "content",
+          "position": {"x": 0.5, "y": 1.5, "width": 5.5, "height": 5.5},
+          "style": {"fontSize": 18, "bulletPoints": true}
+        },
+        {
+          "type": "large_image",
+          "position": {"x": 6.2, "y": 1.5, "width": 3.3, "height": 5.5},
+          "style": {"border": true}
+        }
+      ],
+      "contentTriggers": ["explain with visual", "concept illustration", "detail with image"]
+    },
+    {
+      "id": "top_bottom_split",
+      "name": "Top Bottom Split",
+      "description": "Content split horizontally into top and bottom sections",
+      "elements": [
+        {
+          "type": "title",
+          "position": {"x": 0.5, "y": 0.3, "width": 9, "height": 0.8},
+          "style": {"fontSize": 32, "bold": true}
+        },
+        {
+          "type": "top_section",
+          "position": {"x": 0.5, "y": 1.5, "width": 9, "height": 2.5},
+          "style": {"fontSize": 18, "backgroundColor": "#f5f5f5"}
+        },
+        {
+          "type": "bottom_section",
+          "position": {"x": 0.5, "y": 4.3, "width": 9, "height": 2.5},
+          "style": {"fontSize": 18}
+        }
+      ],
+      "contentTriggers": ["before after", "then now", "problem solution", "cause effect"]
+    },
+    {
+      "id": "centered_content",
+      "name": "Centered Content",
+      "description": "Centered content box with margins",
+      "elements": [
+        {
+          "type": "title",
+          "position": {"x": 0.5, "y": 0.3, "width": 9, "height": 0.8},
+          "style": {"fontSize": 32, "bold": true}
+        },
+        {
+          "type": "centered_box",
+          "position": {"x": 1.5, "y": 2, "width": 7, "height": 4},
+          "style": {"fontSize": 20, "align": "center", "border": true}
+        }
+      ],
+      "contentTriggers": ["key message", "central idea", "main point", "focus"]
+    },
+    {
+      "id": "six_box_grid",
+      "name": "Six Box Grid",
+      "description": "3x2 grid of content boxes",
+      "elements": [
+        {
+          "type": "title",
+          "position": {"x": 0.5, "y": 0.3, "width": 9, "height": 0.8},
+          "style": {"fontSize": 32, "bold": true}
+        },
+        {
+          "type": "small_box",
+          "position": {"x": 0.5, "y": 1.5, "width": 2.8, "height": 2.3},
+          "style": {"fontSize": 12, "boxTitle": true}
+        },
+        {
+          "type": "small_box",
+          "position": {"x": 3.6, "y": 1.5, "width": 2.8, "height": 2.3},
+          "style": {"fontSize": 12, "boxTitle": true}
+        },
+        {
+          "type": "small_box",
+          "position": {"x": 6.7, "y": 1.5, "width": 2.8, "height": 2.3},
+          "style": {"fontSize": 12, "boxTitle": true}
+        },
+        {
+          "type": "small_box",
+          "position": {"x": 0.5, "y": 4.1, "width": 2.8, "height": 2.3},
+          "style": {"fontSize": 12, "boxTitle": true}
+        },
+        {
+          "type": "small_box",
+          "position": {"x": 3.6, "y": 4.1, "width": 2.8, "height": 2.3},
+          "style": {"fontSize": 12, "boxTitle": true}
+        },
+        {
+          "type": "small_box",
+          "position": {"x": 6.7, "y": 4.1, "width": 2.8, "height": 2.3},
+          "style": {"fontSize": 12, "boxTitle": true}
+        }
+      ],
+      "contentTriggers": ["six elements", "6-point framework", "six categories", "multiple options"]
+    },
+    {
+      "id": "pyramid_hierarchy",
+      "name": "Pyramid Hierarchy",
+      "description": "Hierarchical pyramid structure",
+      "elements": [
+        {
+          "type": "title",
+          "position": {"x": 0.5, "y": 0.3, "width": 9, "height": 0.8},
+          "style": {"fontSize": 32, "bold": true}
+        },
+        {
+          "type": "pyramid_top",
+          "position": {"x": 3.5, "y": 1.8, "width": 3, "height": 1},
+          "style": {"fontSize": 16, "backgroundColor": "#4472C4", "color": "white"}
+        },
+        {
+          "type": "pyramid_middle",
+          "position": {"x": 2.5, "y": 3, "width": 5, "height": 1.2},
+          "style": {"fontSize": 14, "backgroundColor": "#5B9BD5", "color": "white"}
+        },
+        {
+          "type": "pyramid_bottom",
+          "position": {"x": 1.5, "y": 4.4, "width": 7, "height": 1.4},
+          "style": {"fontSize": 14, "backgroundColor": "#70AD47", "color": "white"}
+        }
+      ],
+      "contentTriggers": ["hierarchy", "pyramid", "levels", "foundation", "building blocks"]
+    },
+    {
+      "id": "alternating_content",
+      "name": "Alternating Content",
+      "description": "Alternating left-right content blocks",
+      "elements": [
+        {
+          "type": "title",
+          "position": {"x": 0.5, "y": 0.3, "width": 9, "height": 0.8},
+          "style": {"fontSize": 32, "bold": true}
+        },
+        {
+          "type": "left_block",
+          "position": {"x": 0.5, "y": 1.5, "width": 5, "height": 1.5},
+          "style": {"fontSize": 16, "align": "left"}
+        },
+        {
+          "type": "right_block",
+          "position": {"x": 4.5, "y": 3.2, "width": 5, "height": 1.5},
+          "style": {"fontSize": 16, "align": "right"}
+        },
+        {
+          "type": "left_block",
+          "position": {"x": 0.5, "y": 4.9, "width": 5, "height": 1.5},
+          "style": {"fontSize": 16, "align": "left"}
+        }
+      ],
+      "contentTriggers": ["alternating points", "back and forth", "dialogue", "pros cons"]
+    },
+    {
+      "id": "content_with_highlights",
+      "name": "Content with Highlights",
+      "description": "Main content with highlighted sidebar boxes",
+      "elements": [
+        {
+          "type": "title",
+          "position": {"x": 0.5, "y": 0.3, "width": 9, "height": 0.8},
+          "style": {"fontSize": 32, "bold": true}
+        },
+        {
+          "type": "main_text",
+          "position": {"x": 0.5, "y": 1.5, "width": 5.5, "height": 5.5},
+          "style": {"fontSize": 18}
+        },
+        {
+          "type": "highlight_box",
+          "position": {"x": 6.2, "y": 1.5, "width": 3.3, "height": 1.5},
+          "style": {"fontSize": 14, "backgroundColor": "#FFF2CC", "border": true}
+        },
+        {
+          "type": "highlight_box",
+          "position": {"x": 6.2, "y": 3.2, "width": 3.3, "height": 1.5},
+          "style": {"fontSize": 14, "backgroundColor": "#E7F3FF", "border": true}
+        },
+        {
+          "type": "highlight_box",
+          "position": {"x": 6.2, "y": 4.9, "width": 3.3, "height": 1.5},
+          "style": {"fontSize": 14, "backgroundColor": "#FFE6E6", "border": true}
+        }
+      ],
+      "contentTriggers": ["key takeaways", "main plus highlights", "details with callouts"]
+    },
+    {
+      "id": "comparison_table",
+      "name": "Comparison Table",
+      "description": "Side-by-side comparison in table format",
+      "elements": [
+        {
+          "type": "title",
+          "position": {"x": 0.5, "y": 0.3, "width": 9, "height": 0.8},
+          "style": {"fontSize": 32, "bold": true}
+        },
+        {
+          "type": "comparison_header",
+          "position": {"x": 0.5, "y": 1.5, "width": 9, "height": 0.5},
+          "style": {"fontSize": 18, "bold": true, "backgroundColor": "#4472C4", "color": "white"}
+        },
+        {
+          "type": "comparison_left",
+          "position": {"x": 0.5, "y": 2.1, "width": 4.5, "height": 4.9},
+          "style": {"fontSize": 16, "backgroundColor": "#F2F2F2"}
+        },
+        {
+          "type": "comparison_right",
+          "position": {"x": 5.0, "y": 2.1, "width": 4.5, "height": 4.9},
+          "style": {"fontSize": 16, "backgroundColor": "#E7E6E6"}
+        }
+      ],
+      "contentTriggers": ["comparison table", "versus table", "side by side comparison", "feature comparison"]
+    },
+    {
+      "id": "circular_diagram",
+      "name": "Circular Diagram",
+      "description": "Central concept with surrounding elements",
+      "elements": [
+        {
+          "type": "title",
+          "position": {"x": 0.5, "y": 0.3, "width": 9, "height": 0.8},
+          "style": {"fontSize": 32, "bold": true}
+        },
+        {
+          "type": "center_circle",
+          "position": {"x": 3.5, "y": 3, "width": 3, "height": 2},
+          "style": {"fontSize": 18, "bold": true, "shape": "circle", "backgroundColor": "#4472C4", "color": "white"}
+        },
+        {
+          "type": "satellite_box",
+          "position": {"x": 1, "y": 1.5, "width": 2, "height": 1.2},
+          "style": {"fontSize": 14}
+        },
+        {
+          "type": "satellite_box",
+          "position": {"x": 7, "y": 1.5, "width": 2, "height": 1.2},
+          "style": {"fontSize": 14}
+        },
+        {
+          "type": "satellite_box",
+          "position": {"x": 1, "y": 5.3, "width": 2, "height": 1.2},
+          "style": {"fontSize": 14}
+        },
+        {
+          "type": "satellite_box",
+          "position": {"x": 7, "y": 5.3, "width": 2, "height": 1.2},
+          "style": {"fontSize": 14}
+        }
+      ],
+      "contentTriggers": ["ecosystem", "central concept", "hub and spoke", "core and related"]
+    },
+    {
+      "id": "full_image_overlay",
+      "name": "Full Image with Text Overlay",
+      "description": "Full slide image with text overlay",
+      "elements": [
+        {
+          "type": "full_image",
+          "position": {"x": 0, "y": 0, "width": 10, "height": 7.5},
+          "style": {"opacity": 0.3}
+        },
+        {
+          "type": "overlay_title",
+          "position": {"x": 1, "y": 2, "width": 8, "height": 1.5},
+          "style": {"fontSize": 48, "bold": true, "color": "white", "shadow": true}
+        },
+        {
+          "type": "overlay_text",
+          "position": {"x": 1.5, "y": 4, "width": 7, "height": 2},
+          "style": {"fontSize": 24, "color": "white", "shadow": true}
+        }
+      ],
+      "contentTriggers": ["impactful message", "visual statement", "dramatic reveal", "photo background"]
+    },
+    {
+      "id": "kpi_dashboard",
+      "name": "KPI Dashboard",
+      "description": "Multiple KPI boxes in dashboard layout",
+      "elements": [
+        {
+          "type": "title",
+          "position": {"x": 0.5, "y": 0.3, "width": 9, "height": 0.8},
+          "style": {"fontSize": 32, "bold": true}
+        },
+        {
+          "type": "kpi_box",
+          "position": {"x": 0.5, "y": 1.5, "width": 2.8, "height": 2},
+          "style": {"numberSize": 36, "labelSize": 14, "backgroundColor": "#E7F3FF"}
+        },
+        {
+          "type": "kpi_box",
+          "position": {"x": 3.6, "y": 1.5, "width": 2.8, "height": 2},
+          "style": {"numberSize": 36, "labelSize": 14, "backgroundColor": "#FFE6E6"}
+        },
+        {
+          "type": "kpi_box",
+          "position": {"x": 6.7, "y": 1.5, "width": 2.8, "height": 2},
+          "style": {"numberSize": 36, "labelSize": 14, "backgroundColor": "#E6F4EA"}
+        },
+        {
+          "type": "chart_area",
+          "position": {"x": 0.5, "y": 3.8, "width": 9, "height": 3.2},
+          "style": {"backgroundColor": "#F5F5F5"}
+        }
+      ],
+      "contentTriggers": ["dashboard", "metrics overview", "kpi summary", "performance metrics", "data dashboard"]
+    },
+    {
+      "id": "vertical_split",
+      "name": "Vertical Split",
+      "description": "Content split vertically in the middle",
+      "elements": [
+        {
+          "type": "left_title",
+          "position": {"x": 0.5, "y": 0.3, "width": 4.5, "height": 0.8},
+          "style": {"fontSize": 28, "bold": true}
+        },
+        {
+          "type": "right_title",
+          "position": {"x": 5.0, "y": 0.3, "width": 4.5, "height": 0.8},
+          "style": {"fontSize": 28, "bold": true}
+        },
+        {
+          "type": "left_content",
+          "position": {"x": 0.5, "y": 1.5, "width": 4.5, "height": 5.5},
+          "style": {"fontSize": 16, "backgroundColor": "#F8F8F8"}
+        },
+        {
+          "type": "right_content",
+          "position": {"x": 5.0, "y": 1.5, "width": 4.5, "height": 5.5},
+          "style": {"fontSize": 16, "backgroundColor": "#EFEFEF"}
+        }
+      ],
+      "contentTriggers": ["split screen", "two perspectives", "dual view", "left vs right", "contrasting views"]
+    }
+  ],
+  "layoutSelectionRules": {
+    "priority": [
+      "title_slide",
+      "section_divider",
+      "quote",
+      "big_number",
+      "kpi_dashboard",
+      "comparison_table",
+      "table",
+      "timeline",
+      "process_flow",
+      "pyramid_hierarchy",
+      "circular_diagram",
+      "full_image_overlay",
+      "four_content_grid",
+      "six_box_grid",
+      "two_content_boxes",
+      "two_column_text",
+      "vertical_split",
+      "three_columns",
+      "three_column_images",
+      "five_columns",
+      "picture_grid_2x2",
+      "picture_right",
+      "picture_left",
+      "left_content_right_image",
+      "split_header",
+      "top_bottom_split",
+      "content_with_sidebar",
+      "content_with_highlights",
+      "alternating_content",
+      "centered_content",
+      "icon_list",
+      "call_to_action",
+      "content_with_title",
+      "blank_content"
+    ],
+    "defaultLayout": "content_with_title"
+  }
+}
