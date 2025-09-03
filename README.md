@@ -7,7 +7,7 @@ SlideSpark AI is a powerful cross-platform application that acts as an intellige
 - **Draft-to-Deck**: Convert text documents (.docx, .txt) into structured presentations
 - **AI-Powered Editing**: Use natural language commands to edit presentations
 - **Three-Panel Interface**: Structure explorer, AI command console, and live visual preview
-- **Multi-Provider LLM Support**: Choose between OpenAI, Anthropic, and Ollama in real-time
+- **Multi-Provider LLM Support**: Choose between DeepSeek (default), OpenAI, Anthropic, and Ollama in real-time
 - **Context-Aware Editing**: Choose between local (single shape) or global (entire presentation) context
 
 ## Installation
