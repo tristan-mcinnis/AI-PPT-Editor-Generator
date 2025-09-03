@@ -50,9 +50,10 @@
                     <h3>AI Provider</h3>
                     <div class="llm-provider-select">
                         <select id="llm-provider" class="provider-select">
-                            <option value="anthropic">Anthropic (Claude)</option>
-                            <option value="openai">OpenAI (GPT-4)</option>
-                            <option value="ollama">Ollama (Local)</option>
+                            <option value="anthropic" {% if default_provider=='anthropic' %}selected{% endif %}>Anthropic (Claude)</option>
+                            <option value="openai"    {% if default_provider=='openai'    %}selected{% endif %}>OpenAI (GPT-4)</option>
+                            <option value="ollama"    {% if default_provider=='ollama'    %}selected{% endif %}>Ollama (Local)</option>
+                            <option value="deepseek"  {% if default_provider=='deepseek'  %}selected{% endif %}>DeepSeek</option>
                         </select>
                         <small id="provider-status" class="provider-status">Using Anthropic API</small>
                         
@@ -88,6 +89,23 @@
                             </small>
                         </div>
                     </div>
+
+                    <!-- Common Slide Recipes -->
+                    <div class="button-group" style="margin-top: 0.75rem;">
+                        <div class="button-item" style="display: flex; align-items: center;">
+                            <select id="recipe-select" class="provider-select" style="flex: 1; margin-right: 0.5rem;">
+                                <option value="">-- Common Slide Recipes --</option>
+                                <option value="qbr">QBR (Quarterly Business Review)</option>
+                                <option value="project_update">Project Update</option>
+                                <option value="proposal_overview">Proposal Overview</option>
+                            </select>
+                            <button id="insert-recipe" class="btn btn-small" style="white-space: nowrap;">Insert Recipe</button>
+                        </div>
+                        <small style="display:block; margin-top:0.25rem; color:#6c757d;">
+                            Inserts a proven template into the input box
+                        </small>
+                        </div>
+                    <input type="file" id="document-file" accept=".docx,.txt" style="display: none;">
                     <input type="file" id="document-file" accept=".docx,.txt" style="display: none;">
                 </div>
                 

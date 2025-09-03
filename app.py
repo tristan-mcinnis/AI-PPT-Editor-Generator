@@ -3,6 +3,7 @@ import os
 import json
 import uuid
 import logging
+import sys
 from werkzeug.utils import secure_filename
 from werkzeug.exceptions import RequestEntityTooLarge
 from dotenv import load_dotenv
@@ -40,6 +41,20 @@ sessions = {}
 # Global lock for LibreOffice processes to prevent race conditions
 libreoffice_lock = threading.Lock()
 
+def kill_soffice_processes():
+    """Kill LibreOffice processes in a cross-platform way."""
+    try:
+        if sys.platform == 'win32':
+            # Windows: use taskkill
+            subprocess.run(['taskkill', '/IM', 'soffice.exe', '/F'], capture_output=True, timeout=5)
+            subprocess.run(['taskkill', '/IM', 'soffice.bin', '/F'], capture_output=True, timeout=5)
+        else:
+            # Linux/macOS: use pkill
+            subprocess.run(['pkill', '-f', 'soffice'], capture_output=True, timeout=5)
+        time.sleep(1)  # Give processes time to die
+    except:
+        pass  # Ignore errors in cleanup
+
 def allowed_file(filename, extensions):
     """Check if file has allowed extension."""
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in extensions
@@ -57,7 +72,9 @@ def handle_exception(error):
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    # Pass default LLM provider from environment so the dropdown is pre-selected
+    default_provider = os.environ.get('LLM_PROVIDER', 'deepseek').lower()
+    return render_template('index.html', default_provider=default_provider)
 
 @app.route('/text-helper')
 def text_helper():
@@ -307,11 +324,7 @@ def generate_all_slide_previews(session_id, filepath):
             logger.info(f"Converting presentation with {total_slides} slides to PNG")
             
             # Kill any existing LibreOffice processes to prevent conflicts
-            try:
-                subprocess.run(['pkill', '-f', 'soffice'], capture_output=True, timeout=5)
-                time.sleep(1)  # Give processes time to die
-            except:
-                pass  # Ignore errors in cleanup
+            kill_soffice_processes()
             
             base_name = os.path.splitext(os.path.basename(filepath))[0]
             
@@ -535,10 +548,7 @@ def generate_all_slide_previews(session_id, filepath):
             return None
         finally:
             # Clean up any remaining LibreOffice processes
-            try:
-                subprocess.run(['pkill', '-f', 'soffice'], capture_output=True, timeout=5)
-            except:
-                pass
+            kill_soffice_processes()
 
 def generate_placeholder_image(slide_index):
     """Generate a simple placeholder image when preview generation fails."""
@@ -721,11 +731,7 @@ def export_presentation_as_pdf(session_id):
             logger.info(f"LibreOffice found for PDF export: {result.stdout.strip()}")
             
             # Kill any existing LibreOffice processes to prevent conflicts
-            try:
-                subprocess.run(['pkill', '-f', 'soffice'], capture_output=True, timeout=5)
-                time.sleep(1)
-            except:
-                pass
+            kill_soffice_processes()
             
             # Convert presentation to PDF
             base_name = os.path.splitext(os.path.basename(filepath))[0]
@@ -775,10 +781,7 @@ def export_presentation_as_pdf(session_id):
             return jsonify({'error': f'PDF export failed: {str(e)}'}), 500
         finally:
             # Clean up LibreOffice processes
-            try:
-                subprocess.run(['pkill', '-f', 'soffice'], capture_output=True, timeout=5)
-            except:
-                pass
+            kill_soffice_processes()
             
             # Note: We don't clean up temp_dir immediately as send_file needs it
             # The file will be cleaned up by the OS eventually

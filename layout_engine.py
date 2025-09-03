@@ -15,6 +15,43 @@ class LayoutEngine:
         """Initialize the Layout Engine with layout definitions."""
         self.layouts = self._load_layouts(layout_file)
         self.layout_map = {layout['id']: layout for layout in self.layouts['layouts']}
+        # Basic capacity heuristics for each layout (can be fine-tuned later)
+        # The keys are only illustrative; layouts missing here fall back to generic values.
+        self.capacity_map = {
+            "content_with_title":   {"bullets": 6},
+            "two_column_text":      {"columns": 2, "bulletsPerColumn": 6},
+            "two_content_boxes":    {"boxes": 2, "itemsPerBox": 5},
+            "three_columns":        {"columns": 3, "bulletsPerColumn": 5},
+            "four_content_grid":    {"boxes": 4, "itemsPerBox": 4},
+            "six_box_grid":         {"boxes": 6, "itemsPerBox": 3},
+            "big_number":           {"number": 1, "supporting": 40},
+            "kpi_dashboard":        {"kpis": 3},
+            "timeline":             {"events": 6},
+            "process_flow":         {"steps": 7},
+            "table":                {"rows": 12, "cols": 6},
+            "pyramid_hierarchy":    {"levels": 3},
+            "quote":                {"quoteChars": 200},
+        }
+
+    # ------------------------------------------------------------------
+    # Helper to expose capacities + triggers in a compact way for the LLM
+    # ------------------------------------------------------------------
+    def _build_layout_metadata_for_prompt(self) -> str:
+        """
+        Return a short JSON-like string describing layouts, triggers and capacities.
+        This is fed into the LLM so it can reason about fit.
+        """
+        summary = []
+        for layout in self.layouts["layouts"]:
+            meta = {
+                "id": layout["id"],
+                "tr": layout.get("contentTriggers", [])[:5],  # keep prompt short
+            }
+            if layout["id"] in self.capacity_map:
+                meta.update(self.capacity_map[layout["id"]])
+            summary.append(meta)
+        # Use json.dumps with separators to keep size small
+        return json.dumps(summary, separators=(",", ":"))
         
     def _load_layouts(self, layout_file: str) -> Dict:
         """Load layout definitions from JSON file."""
@@ -45,6 +82,12 @@ AVAILABLE LAYOUTS:
         
         prompt += """
 
+LAYOUT CAPACITIES (use to judge content fit):
+"""
+        prompt += self._build_layout_metadata_for_prompt()
+        
+        prompt += """
+
 ANALYSIS GUIDELINES:
 1. Look for keywords and content patterns that match the content triggers
 2. Consider the structure of the content (e.g., comparisons need two columns)
@@ -56,6 +99,10 @@ ANALYSIS GUIDELINES:
 8. For opening slides, use title_slide
 9. For section breaks, use section_divider
 10. Default to content_with_title for general content
+11. Ensure the chosen layout's capacities (bullets, boxes, columns, etc.) can HOLD the provided content
+12. If bullet count exceeds single-column capacity, prefer multi-column or grid layouts
+13. For ≥4 categories/items choose *four_content_grid*; ≥6 choose *six_box_grid*
+14. For two sets of parallel content choose *two_column_text* or *two_content_boxes*
 
 Return ONLY the layout ID (e.g., "two_content_boxes") with no explanation."""
         

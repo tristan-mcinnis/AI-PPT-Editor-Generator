@@ -12,6 +12,10 @@ from layout_engine import LayoutEngine
 # Set up logger
 logger = logging.getLogger(__name__)
 
+# ---------------------------------------------------------------------------
+# PresentationEngine
+# ---------------------------------------------------------------------------
+
 class PresentationEngine:
     def __init__(self):
         self.namespace = {
@@ -269,47 +273,59 @@ The XML should start with <p:sp or similar PowerPoint XML tags.
         """Build out an entire presentation from structured text."""
         try:
             # Create prompt for LLM
-            prompt = f"""You are an expert at building PowerPoint presentations from structured content.
-            
-I have an existing PowerPoint presentation file that needs to be populated with content.
-Please analyze the following structured text and generate a detailed JSON plan for building out the presentation.
+            prompt = f"""You are an expert presentation architect. 
+Your job is to convert structured text into a precise JSON plan for slides.
 
-STRUCTURED TEXT:
+STRUCTURED TEXT (user input):
 {structured_text}
 
-IMPORTANT INSTRUCTIONS:
-1. Extract all slides from the structured text
-2. For each slide, identify:
-   - Title text
-   - All content (bullet points, text boxes, etc.)
-   - Any special formatting mentioned
-3. Organize content logically
-4. Preserve the exact wording and structure from the source
-5. Return a JSON array with this structure:
+===================
+Allowed content_block types
+===================
+• bullets            – {{ "type": "bullets", "items": ["Point 1", "Point 2"] }}
+• text               – {{ "type": "text", "text": "Paragraph content" }}
+• content_box        – {{ "type": "content_box", "title": "Box Title", "items": ["Item 1"] }}
+• table              – {{ "type": "table", "data": [["H","V"]] }}
+• process            – {{ "type": "process", "steps": ["Step 1","Step 2"] }}
+• kpi                – {{ "type": "kpi", "value": "95%", "label": "Satisfaction" }}
+• comparison         – {{ "type": "comparison", "data": {{ "left":{{}}, "right":{{}} }} }}
+• pyramid            – {{ "type": "pyramid", "levels": ["Top","Mid","Base"] }}
+• column             – {{ "type": "column", "title": "Header", "items": ["A","B"] }}
+• attribution        – {{ "type": "attribution", "text": "- Name, Org" }}
+• highlight          – {{ "type": "highlight", "title": "Key", "text": "Important" }}
 
+===================
+Best-practice guidelines
+===================
+1. 3-6 bullets per slide, each ≤ 12 words.  
+2. Avoid duplicate bullets or slides.  
+3. Maintain consistent, professional tone and tense.  
+4. Use content_box when a title plus list of items exists.  
+5. Use kpi for standalone numeric stats.  
+6. Use table when data naturally fits rows/columns.  
+7. Use process for sequential steps; timeline for dated milestones.  
+8. Choose the minimal block type needed – no mixtures that conflict.  
+
+===================
+Output requirements
+===================
+• Produce a VALID JSON array only – NO markdown fences, text, or comments.  
+• Each element must include: "slide_number", "title", and "content_blocks".  
+• Slide numbers must start at 1 and be sequential.  
+
+Example skeleton (do NOT wrap in markdown):
 [
   {{
     "slide_number": 1,
-    "title": "Slide title text",
+    "title": "Title text",
     "content_blocks": [
       {{
         "type": "bullets",
-        "items": ["Bullet 1", "Bullet 2", "Bullet 3"]
-      }},
-      {{
-        "type": "text",
-        "text": "Regular paragraph text"
-      }},
-      {{
-        "type": "content_box",
-        "title": "Box Title",
-        "items": ["Item 1", "Item 2"]
+        "items": ["Example point"]
       }}
     ]
   }}
 ]
-
-Return ONLY the JSON array, no explanations or markdown formatting.
 """
             
             # Get LLM response
@@ -381,6 +397,16 @@ Return ONLY the JSON array, no explanations or markdown formatting.
                     # Use LLM to select the best layout for this slide
                     layout_id = self.layout_engine.analyze_content_for_layout(slide_data, llm)
                     logger.info(f"Selected layout: {layout_id}")
+
+                    # ------------------------------------------------------------------
+                    # Capacity-aware validation & auto-shrink
+                    # ------------------------------------------------------------------
+                    try:
+                        if self._needs_shrink(slide_data, layout_id):
+                            logger.info("Content exceeds capacity – requesting summarized version")
+                            slide_data = self._summarize_to_fit(slide_data, layout_id, llm)
+                    except Exception as cap_err:
+                        logger.warning(f"Capacity check failed, proceeding without shrink: {cap_err}")
                     
                     # Use a blank layout from the original presentation
                     try:
@@ -425,3 +451,76 @@ Return ONLY the JSON array, no explanations or markdown formatting.
             import traceback
             traceback.print_exc()
             return False
+
+    # ------------------------------------------------------------------
+    # Capacity helpers
+    # ------------------------------------------------------------------
+    def _needs_shrink(self, slide_data: Dict, layout_id: str) -> bool:
+        """
+        Quick heuristic check if slide_data is likely to overflow the chosen layout.
+        Only simple bullet/item/row counts handled for now.
+        """
+        caps = self.layout_engine.capacity_map.get(layout_id, {})
+        blocks = slide_data.get("content_blocks", [])
+
+        # bullets capacity (single column)
+        if "bullets" in caps:
+            bullet_total = sum(len(b.get("items", [])) for b in blocks if b.get("type") == "bullets")
+            if bullet_total > caps["bullets"]:
+                return True
+        # boxes
+        if "boxes" in caps and "itemsPerBox" in caps:
+            content_boxes = [b for b in blocks if b.get("type") == "content_box"]
+            if len(content_boxes) > caps["boxes"]:
+                return True
+            for cb in content_boxes:
+                if len(cb.get("items", [])) > caps["itemsPerBox"]:
+                    return True
+        # steps / process
+        if "steps" in caps:
+            steps_blocks = [b for b in blocks if b.get("type") in ("process", "bullets")]
+            steps = 0
+            for sb in steps_blocks:
+                steps += len(sb.get("steps", sb.get("items", [])))
+            if steps > caps["steps"]:
+                return True
+        # rows in table
+        if "rows" in caps:
+            for b in blocks:
+                if b.get("type") == "table":
+                    if len(b.get("data", [])) > caps["rows"]:
+                        return True
+        return False
+
+    def _summarize_to_fit(self, slide_data: Dict, layout_id: str, llm) -> Dict:
+        """
+        Ask the LLM to shrink / summarize content so that it fits within the
+        capacity heuristics of the specified layout. Returns adjusted slide data.
+        """
+        caps = self.layout_engine.capacity_map.get(layout_id, {})
+        prompt = f"""You are an expert presentation editor.
+The slide below has been assigned the layout '{layout_id}' with capacity limits:
+{json.dumps(caps, indent=2)}.
+Trim or summarise the content so it fits **within these limits** while keeping key information.
+Return ONLY the JSON object of shape:
+{{
+  "title": "...",
+  "content_blocks": [ ... ]
+}}
+Do NOT change field names.
+Current slide JSON:
+{json.dumps({k: slide_data[k] for k in ('title','content_blocks')}, indent=2)}
+"""
+        try:
+            response = llm.generate_response(prompt).strip()
+            # remove code fences if any
+            if response.startswith("```"):
+                response = response.split("```", 2)[1] if "```" in response[3:] else response.strip("```")
+            adjusted = json.loads(response)
+            if "title" in adjusted and "content_blocks" in adjusted:
+                slide_data["title"] = adjusted["title"]
+                slide_data["content_blocks"] = adjusted["content_blocks"]
+                logger.info("Slide content successfully trimmed to fit capacity")
+        except Exception as e:
+            logger.warning(f"Failed to shrink content: {e}")
+        return slide_data

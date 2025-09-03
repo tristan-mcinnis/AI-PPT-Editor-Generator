@@ -338,12 +338,47 @@ CRITICAL RULES:
         except Exception as e:
             raise Exception(f"Anthropic API error: {str(e)}")
 
+class DeepSeekProvider(LLMProvider):
+    """
+    LLM provider for DeepSeek (OpenAI-compatible API).
+    Uses OpenAI python SDK with a custom base_url.
+    """
+    def __init__(self, api_key: str, model: str = "deepseek-chat"):
+        # Import lazily to avoid mandatory dependency if provider not used
+        from openai import OpenAI
+        # DeepSeek uses OpenAI-compatible endpoint
+        self.client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
+        self.model = model
+
+    def generate_response(self, prompt: str) -> str:
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": (
+                            "You are a helpful assistant specializing in presentation creation and "
+                            "editing. When asked to generate presentation plans, always return valid JSON."
+                        ),
+                    },
+                    {"role": "user", "content": prompt},
+                ],
+                temperature=0.7,
+                max_tokens=2000,
+                response_format={"type": "text"},
+            )
+            return response.choices[0].message.content
+        except Exception as e:
+            raise Exception(f"DeepSeek API error: {str(e)}")
+
 def get_llm_provider(provider_type: Optional[str] = None, ollama_model: Optional[str] = None) -> LLMProvider:
     """Factory function to get the configured LLM provider."""
     
     # Use provided provider type or fall back to environment variable
     if provider_type is None:
-        provider_type = os.environ.get('LLM_PROVIDER', 'anthropic').lower()
+        # Default to DeepSeek when no provider is specified in the environment
+        provider_type = os.environ.get('LLM_PROVIDER', 'deepseek').lower()
     else:
         provider_type = provider_type.lower()
     
@@ -366,6 +401,13 @@ def get_llm_provider(provider_type: Optional[str] = None, ollama_model: Optional
             raise ValueError("ANTHROPIC_API_KEY environment variable not set")
         model = os.environ.get('ANTHROPIC_MODEL', 'claude-sonnet-4-20250514')
         return AnthropicProvider(api_key, model)
+
+    elif provider_type == 'deepseek':
+        api_key = os.environ.get('DEEPSEEK_API_KEY')
+        if not api_key:
+            raise ValueError("DEEPSEEK_API_KEY environment variable not set")
+        model = os.environ.get('DEEPSEEK_MODEL', 'deepseek-chat')
+        return DeepSeekProvider(api_key, model)
     
     else:
         raise ValueError(f"Unknown LLM provider: {provider_type}")

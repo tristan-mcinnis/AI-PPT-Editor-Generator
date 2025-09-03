@@ -8,6 +8,88 @@ let buildMode = false;
 let selectedProvider = 'anthropic';
 let selectedOllamaModel = 'llama2';
 
+// ---------------------------------------------------------------------------
+// Common slide recipes (id -> { name, text })
+// ---------------------------------------------------------------------------
+const RECIPES = {
+    qbr: {
+        name: 'Quarterly Business Review',
+        text: `## Slide 1
+**Quarterly Business Review**
+- Agenda & objectives
+- Key wins this quarter
+- Challenges we faced
+- Looking ahead
+
+## Slide 2
+**Performance Snapshot**
+- Revenue growth: 12% QoQ
+- Customer churn: 4%
+- NPS: 62
+- Major deals closed: 5
+
+## Slide 3
+**Challenges & Risks**
+- Supply-chain delays
+- Competitive pricing pressures
+- Hiring gaps in engineering
+
+## Slide 4
+**Next Quarter Focus**
+- Expand into APAC market
+- Launch v2 of mobile app
+- Reduce churn below 3%`
+    },
+    project_update: {
+        name: 'Project Update',
+        text: `## Slide 1
+**Project Phoenix – Status Update**
+- Goal: Modernise core platform
+- Timeline: Jan – Jun 2025
+
+## Slide 2
+**Milestones Completed**
+- Requirements gathered
+- Architecture finalised
+- Sprint 1 & 2 delivered
+
+## Slide 3
+**Current Risks**
+- API integration delays
+- Limited QA bandwidth
+
+## Slide 4
+**Next Steps**
+- Complete Sprint 3 stories
+- Security penetration test
+- Prepare UAT environment`
+    },
+    proposal_overview: {
+        name: 'Proposal Overview',
+        text: `## Slide 1
+**Proposal Overview**
+- Client: ACME Corp
+- Objective: Increase online sales 25%
+
+## Slide 2
+**Current Challenges**
+- Low mobile conversion
+- Fragmented customer journey
+
+## Slide 3
+**Recommended Solution**
+- UX redesign (mobile-first)
+- Personalised product suggestions
+- Optimised checkout flow
+
+## Slide 4
+**Expected Benefits**
+- +25% sales in 12 months
+- Higher customer satisfaction
+- Scalable architecture`
+    }
+};
+
 // Execute command placeholder - will be defined later
 let handleExecuteCommand;
 
@@ -41,6 +123,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const exportSection = document.getElementById('export-section');
     const exportPptxBtn = document.getElementById('export-pptx');
     const exportPdfBtn = document.getElementById('export-pdf');
+    // Recipe elements
+    const recipeSelect = document.getElementById('recipe-select');
+    const insertRecipeBtn = document.getElementById('insert-recipe');
 
     // Check if critical elements exist
     console.log('Build button found:', !!buildPresentationBtn);
@@ -100,8 +185,35 @@ document.addEventListener('DOMContentLoaded', function() {
         if (exportPdfBtn) {
             exportPdfBtn.addEventListener('click', handleExportPdf);
         }
+        // Insert recipe handler
+        if (insertRecipeBtn) {
+            insertRecipeBtn.addEventListener('click', handleInsertRecipe);
+        }
     } catch (error) {
         console.error('Error setting up event listeners:', error);
+    }
+
+    // ------------------------------------------------------------------
+    // Recipe insertion logic
+    // ------------------------------------------------------------------
+    function handleInsertRecipe() {
+        const recipeId = recipeSelect ? recipeSelect.value : '';
+        if (!recipeId) {
+            addConsoleMessage('❌ Please choose a recipe first', 'error');
+            return;
+        }
+        const recipe = RECIPES[recipeId];
+        if (!recipe) {
+            addConsoleMessage('❌ Unknown recipe selected', 'error');
+            return;
+        }
+        // Ensure we are in build mode
+        if (!buildMode) {
+            toggleBuildMode();
+        }
+        commandInput.value = recipe.text.trim();
+        commandInput.focus();
+        addConsoleMessage(`📋 Inserted "${recipe.name}" template. Edit as needed then click 🚀 Execute Build`, 'info');
     }
 
     // Handle presentation upload
@@ -669,7 +781,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const statusMessages = {
             'anthropic': 'Using Anthropic API (Claude)',
             'openai': 'Using OpenAI API (GPT-4)',
-            'ollama': 'Using Ollama (Local Model)'
+            'ollama': 'Using Ollama (Local Model)',
+            'deepseek': 'Using DeepSeek API'
         };
         if (providerStatus) {
             providerStatus.textContent = statusMessages[provider] || 'Unknown provider';
@@ -681,7 +794,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const names = {
             'anthropic': 'Anthropic (Claude)',
             'openai': 'OpenAI (GPT-4)',
-            'ollama': 'Ollama (Local)'
+            'ollama': 'Ollama (Local)',
+            'deepseek': 'DeepSeek'
         };
         return names[provider] || provider;
     }

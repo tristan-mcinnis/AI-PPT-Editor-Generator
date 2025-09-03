@@ -43,6 +43,12 @@ SlideSpark AI supports multiple LLM providers. You can switch between providers 
 
 Configure your API keys in the `.env` file:
 
+#### DeepSeek (Default)
+```
+DEEPSEEK_API_KEY=your-api-key-here
+DEEPSEEK_MODEL=deepseek-chat
+```
+
 #### Anthropic (Default)
 ```
 ANTHROPIC_API_KEY=your-api-key-here
@@ -50,7 +56,7 @@ ANTHROPIC_MODEL=claude-sonnet-4-20250514
 ```
 
 #### OpenAI
-```
+SlideSpark AI ships with **DeepSeek as the default provider**.  You can override this by setting `LLM_PROVIDER=openai`, `anthropic`, or `ollama`, or simply picking another option from the dropdown at runtime.
 OPENAI_API_KEY=your-api-key-here
 OPENAI_MODEL=gpt-4o
 ```

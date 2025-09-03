@@ -5,6 +5,7 @@ from presentation_engine import PresentationEngine
 from llm_provider import AnthropicProvider
 from pptx import Presentation
 import os
+import pytest
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -355,6 +356,10 @@ def get_layout_reasoning(slide_data, layout_id):
 def test_full_presentation_generation():
     """Test generating a full presentation with layouts."""
     print("\n=== Full Presentation Generation Test ===\n")
+    
+    # Skip test if Anthropic API key is not available
+    if not os.getenv('ANTHROPIC_API_KEY'):
+        pytest.skip('Skipping full presentation generation test: ANTHROPIC_API_KEY not set')
     
     # Initialize components
     presentation_engine = PresentationEngine()
