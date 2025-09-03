@@ -5,8 +5,6 @@ let selectedShape = null;
 let currentSlideIndex = 0;
 let isExpanded = false;
 let buildMode = false;
-let selectedProvider = 'anthropic';
-let selectedOllamaModel = 'llama2';
 
 // ---------------------------------------------------------------------------
 // Common slide recipes (id -> { name, text })
@@ -64,29 +62,61 @@ const RECIPES = {
 - Security penetration test
 - Prepare UAT environment`
     },
-    proposal_overview: {
-        name: 'Proposal Overview',
+    consulting_proposal: {
+        name: 'Consulting Proposal',
         text: `## Slide 1
-**Proposal Overview**
+**Consulting Proposal**
 - Client: ACME Corp
-- Objective: Increase online sales 25%
+- Objective: Increase operational efficiency by 30%
+- Timeline: 12-week engagement
 
 ## Slide 2
-**Current Challenges**
-- Low mobile conversion
-- Fragmented customer journey
+**Current Business Challenges**
+- Manual processes causing 40% productivity loss
+- Data silos preventing cross-functional insights
+- Inconsistent customer experience across channels
 
 ## Slide 3
 **Recommended Solution**
-- UX redesign (mobile-first)
-- Personalised product suggestions
-- Optimised checkout flow
+- Process automation & workflow redesign
+- Integrated data platform implementation
+- Customer journey optimization
 
 ## Slide 4
-**Expected Benefits**
-- +25% sales in 12 months
-- Higher customer satisfaction
-- Scalable architecture`
+**Expected Business Outcomes**
+- 30% increase in operational efficiency
+- $2.4M annual cost savings
+- Improved customer satisfaction metrics
+- Scalable foundation for future growth`
+    },
+    qual_mr_report: {
+        name: 'Qualitative Market Research Report',
+        text: `## Slide 1
+**Qualitative Market Research Findings**
+- Study objective: Understand customer perception of Product X
+- Methodology: 24 in-depth interviews, 4 focus groups
+- Research period: June-July 2025
+
+## Slide 2
+**Key Customer Insights**
+- Users value simplicity over feature richness
+- Price sensitivity varies significantly by segment
+- Brand perception strongest among 35-45 demographic
+- Competitor Y seen as "innovative but unreliable"
+
+## Slide 3
+**Voice of Customer Highlights**
+- "I need something that works first time, every time"
+- "The onboarding experience felt overwhelming"
+- "Support team response time exceeded expectations"
+- "Would recommend to colleagues but not for enterprise use"
+
+## Slide 4
+**Recommendations & Next Steps**
+- Simplify user interface based on core user journeys
+- Develop segment-specific messaging strategy
+- Enhance enterprise reliability features
+- Conduct quantitative validation study in Q4`
     }
 };
 
@@ -115,11 +145,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const editModeSection = document.getElementById('edit-mode-section');
     const commandSectionTitle = document.getElementById('command-section-title');
     const modeIndicator = document.getElementById('mode-indicator');
-    const llmProviderSelect = document.getElementById('llm-provider');
-    const providerStatus = document.getElementById('provider-status');
-    const ollamaModelSection = document.getElementById('ollama-model-section');
-    const ollamaModelSelect = document.getElementById('ollama-model');
-    const testOllamaBtn = document.getElementById('test-ollama-btn');
     const exportSection = document.getElementById('export-section');
     const exportPptxBtn = document.getElementById('export-pptx');
     const exportPdfBtn = document.getElementById('export-pdf');
@@ -168,14 +193,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         if (nextSlideBtn) {
             nextSlideBtn.addEventListener('click', () => navigateSlide(1));
-        }
-        if (llmProviderSelect) {
-            llmProviderSelect.addEventListener('change', handleProviderChange);
-            // Set initial provider from stored value
-            const storedProvider = localStorage.getItem('llmProvider') || 'anthropic';
-            llmProviderSelect.value = storedProvider;
-            selectedProvider = storedProvider;
-            updateProviderStatus(storedProvider);
         }
         
         // Export button event listeners
@@ -626,12 +643,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         try {
             showLoading();
-            if (selectedProvider === 'ollama') {
-                addConsoleMessage('🔧 Processing with Ollama (this may take longer for local models)...', 'info');
-                addConsoleMessage(`🤖 Using model: ${selectedOllamaModel}`, 'info');
-            } else {
-                addConsoleMessage('🔧 Processing structured text with AI...', 'info');
-            }
+            addConsoleMessage('🔧 Processing structured text with AI...', 'info');
             addConsoleMessage(`📝 Content preview: ${structuredText.substring(0, 100)}...`, 'info');
             
             console.log('Making API call to:', `/api/presentation/${currentSession}/build`);
@@ -640,9 +652,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    structured_text: structuredText,
-                    provider: selectedProvider,
-                    ollama_model: selectedProvider === 'ollama' ? selectedOllamaModel : null
+                    structured_text: structuredText
                 })
             });
             
@@ -710,9 +720,6 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             showLoading();
             addConsoleMessage(`> ${command}`);
-            if (selectedProvider === 'ollama') {
-                addConsoleMessage(`🤖 Processing with Ollama model: ${selectedOllamaModel}`, 'info');
-            }
             
             const response = await fetch(`/api/presentation/${currentSession}/edit`, {
                 method: 'POST',
@@ -720,9 +727,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: JSON.stringify({
                     shape_id: selectedShape,
                     command: command,
-                    context_mode: contextMode,
-                    provider: selectedProvider,
-                    ollama_model: selectedProvider === 'ollama' ? selectedOllamaModel : null
+                    context_mode: contextMode
                 })
             });
 
@@ -759,146 +764,6 @@ document.addEventListener('DOMContentLoaded', function() {
             await originalExecuteCommand();
         }
     };
-
-    // Handle LLM provider change
-    async function handleProviderChange(event) {
-        selectedProvider = event.target.value;
-        localStorage.setItem('llmProvider', selectedProvider);
-        updateProviderStatus(selectedProvider);
-        addConsoleMessage(`✅ Switched to ${getProviderName(selectedProvider)}`, 'info');
-        
-        // Show/hide Ollama model selection
-        if (selectedProvider === 'ollama') {
-            ollamaModelSection.style.display = 'block';
-            await loadOllamaModels();
-        } else {
-            ollamaModelSection.style.display = 'none';
-        }
-    }
-
-    // Update provider status message
-    function updateProviderStatus(provider) {
-        const statusMessages = {
-            'anthropic': 'Using Anthropic API (Claude)',
-            'openai': 'Using OpenAI API (GPT-4)',
-            'ollama': 'Using Ollama (Local Model)',
-            'deepseek': 'Using DeepSeek API'
-        };
-        if (providerStatus) {
-            providerStatus.textContent = statusMessages[provider] || 'Unknown provider';
-        }
-    }
-
-    // Get friendly provider name
-    function getProviderName(provider) {
-        const names = {
-            'anthropic': 'Anthropic (Claude)',
-            'openai': 'OpenAI (GPT-4)',
-            'ollama': 'Ollama (Local)',
-            'deepseek': 'DeepSeek'
-        };
-        return names[provider] || provider;
-    }
-
-    // Load available Ollama models
-    async function loadOllamaModels() {
-        try {
-            ollamaModelSelect.innerHTML = '<option value="">Loading models...</option>';
-            
-            const response = await fetch('/api/ollama/models');
-            if (!response.ok) {
-                throw new Error('Failed to fetch Ollama models');
-            }
-            
-            const data = await response.json();
-            const models = data.models || [];
-            
-            if (models.length === 0) {
-                ollamaModelSelect.innerHTML = '<option value="">No models found - install with: ollama pull llama2</option>';
-                return;
-            }
-            
-            ollamaModelSelect.innerHTML = '';
-            models.forEach(model => {
-                const option = document.createElement('option');
-                option.value = model.name;
-                option.textContent = `${model.name} (${formatSize(model.size)})`;
-                ollamaModelSelect.appendChild(option);
-            });
-            
-            // Restore previously selected model or use first available
-            const storedModel = localStorage.getItem('ollamaModel');
-            if (storedModel && models.some(m => m.name === storedModel)) {
-                ollamaModelSelect.value = storedModel;
-                selectedOllamaModel = storedModel;
-            } else if (models.length > 0) {
-                selectedOllamaModel = models[0].name;
-                ollamaModelSelect.value = selectedOllamaModel;
-            }
-            
-        } catch (error) {
-            console.error('Error loading Ollama models:', error);
-            ollamaModelSelect.innerHTML = '<option value="">Error loading models - is Ollama running?</option>';
-        }
-    }
-
-    // Format file size
-    function formatSize(bytes) {
-        const gb = bytes / (1024 * 1024 * 1024);
-        return gb >= 1 ? `${gb.toFixed(1)}GB` : `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
-    }
-
-    // Handle Ollama model selection
-    if (ollamaModelSelect) {
-        ollamaModelSelect.addEventListener('change', (event) => {
-            selectedOllamaModel = event.target.value;
-            localStorage.setItem('ollamaModel', selectedOllamaModel);
-            addConsoleMessage(`✅ Selected Ollama model: ${selectedOllamaModel}`, 'info');
-        });
-    }
-
-    // Handle Ollama test
-    if (testOllamaBtn) {
-        testOllamaBtn.addEventListener('click', async () => {
-            if (!selectedOllamaModel) {
-                addConsoleMessage('❌ Please select an Ollama model first', 'error');
-                return;
-            }
-            
-            try {
-                testOllamaBtn.textContent = 'Testing...';
-                testOllamaBtn.disabled = true;
-                
-                addConsoleMessage(`🧪 Testing Ollama model: ${selectedOllamaModel}`, 'info');
-                
-                const response = await fetch('/api/ollama/test', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ model: selectedOllamaModel })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    addConsoleMessage(`✅ Ollama test successful! Response: "${data.response}"`, 'info');
-                } else {
-                    addConsoleMessage(`❌ Ollama test failed: ${data.error}`, 'error');
-                }
-                
-            } catch (error) {
-                addConsoleMessage(`❌ Ollama test error: ${error.message}`, 'error');
-            } finally {
-                testOllamaBtn.textContent = 'Test Ollama';
-                testOllamaBtn.disabled = false;
-            }
-        });
-    }
-
-    // Check if provider is Ollama on load
-    if (selectedProvider === 'ollama' && ollamaModelSection) {
-        ollamaModelSection.style.display = 'block';
-        loadOllamaModels();
-    }
 
     // Export functionality
     function showExportSection() {

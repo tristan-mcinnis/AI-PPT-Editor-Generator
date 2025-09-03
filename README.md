@@ -1,21 +1,21 @@
-# SlideSpark AI - Intelligent Presentation Co-pilot
+# AI PPT Editor - Intelligent Presentation Co-pilot
 
-SlideSpark AI is a powerful cross-platform application that acts as an intelligent co-pilot for creating and editing presentations. It transforms raw text documents into well-structured presentations and provides a chat-based interface for making precise edits.
+AI PPT Editor is a powerful cross-platform application that acts as an intelligent co-pilot for creating and editing presentations. It transforms raw text documents into well-structured presentations and provides a chat-based interface for making precise edits.
 
 ## Features
 
 - **Draft-to-Deck**: Convert text documents (.docx, .txt) into structured presentations
 - **AI-Powered Editing**: Use natural language commands to edit presentations
 - **Three-Panel Interface**: Structure explorer, AI command console, and live visual preview
-- **Multi-Provider LLM Support**: Choose between DeepSeek (default), OpenAI, Anthropic, and Ollama in real-time
+- **DeepSeek-Powered**: Optimized prompts and flows for DeepSeek
 - **Context-Aware Editing**: Choose between local (single shape) or global (entire presentation) context
 
 ## Installation
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/slidespark-ai.git
-cd slidespark-ai
+git clone https://github.com/tristan-mcinnis/AI-PPT-Editor-Generator.git
+cd AI-PPT-Editor-Generator
 ```
 
 2. Create a virtual environment:
@@ -39,35 +39,12 @@ cp .env.example .env
 
 ### LLM Provider Setup
 
-SlideSpark AI supports multiple LLM providers. You can switch between providers in real-time using the dropdown in the AI Command Console.
+AI PPT Editor uses DeepSeek as its LLM provider. Configure your API key in the `.env` file:
 
-Configure your API keys in the `.env` file:
-
-#### DeepSeek (Default)
 ```
 DEEPSEEK_API_KEY=your-api-key-here
 DEEPSEEK_MODEL=deepseek-chat
 ```
-
-#### Anthropic (Default)
-```
-ANTHROPIC_API_KEY=your-api-key-here
-ANTHROPIC_MODEL=claude-sonnet-4-20250514
-```
-
-#### OpenAI
-SlideSpark AI ships with **DeepSeek as the default provider**.  You can override this by setting `LLM_PROVIDER=openai`, `anthropic`, or `ollama`, or simply picking another option from the dropdown at runtime.
-OPENAI_API_KEY=your-api-key-here
-OPENAI_MODEL=gpt-4o
-```
-
-#### Ollama (Local)
-```
-OLLAMA_HOST=http://localhost:11434
-OLLAMA_MODEL=qwen3:1.7b
-```
-
-Note: The `LLM_PROVIDER` environment variable sets the default provider, but users can change it anytime from the UI.
 
 ### Slide Preview (Optional)
 
@@ -88,21 +65,17 @@ python app.py
 
 2. Open your browser to `http://localhost:5030`
 
-3. **Choose AI Provider** (Optional):
-   - Select your preferred AI provider from the dropdown in the AI Command Console
-   - The app remembers your choice for future sessions
-
-4. **Upload a Presentation**:
+3. **Upload a Presentation**:
    - Click "Upload Presentation" in the Structure Explorer panel
    - Select a `.pptx` file
 
-5. **Edit with AI**:
+4. **Edit with AI**:
    - Select a shape in the Structure Explorer
    - Choose context mode (Local or Global)
    - Type your command in the AI Command Console
    - Click "Execute" to apply changes
 
-6. **Create from Document**:
+5. **Create from Document**:
    - Click "Ingest from Document" in the AI Command Console
    - Upload a `.docx` or `.txt` file
    - Review the proposed structure
@@ -120,13 +93,13 @@ python app.py
 
 Run the test suite:
 ```bash
-pytest test_app.py
+pytest
 ```
 
 ## Project Structure
 
 ```
-slidespark-ai/
+AI-PPT-Editor-Generator/
 ├── app.py                  # Main Flask application
 ├── llm_provider.py         # LLM provider abstraction
 ├── presentation_engine.py  # PowerPoint manipulation logic
@@ -138,7 +111,7 @@ slidespark-ai/
 │   │   └── style.css      # Styling
 │   └── js/
 │       └── app.js         # Frontend JavaScript
-├── test_app.py            # Test suite
+├── test_layout_engine.py  # Test suite
 ├── requirements.txt       # Python dependencies
 └── README.md             # This file
 ```
@@ -161,9 +134,8 @@ slidespark-ai/
 - The app will still work but show placeholder images
 
 ### LLM API errors
-- Check your API keys in the `.env` file
+- Check your DeepSeek API key in the `.env` file
 - Ensure you have sufficient API credits
-- For Ollama, ensure the service is running locally
 
 ### File upload issues
 - Maximum file size is 16MB

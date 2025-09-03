@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SlideSpark AI - Intelligent Presentation Co-pilot</title>
+    <title>AI PPT Editor</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 </head>
@@ -45,28 +45,7 @@
             </div>
             <div class="panel-content">
                 <!-- Action Buttons Section -->
-                <!-- LLM Provider Selection -->
-                <div class="console-section">
-                    <h3>AI Provider</h3>
-                    <div class="llm-provider-select">
-                        <select id="llm-provider" class="provider-select">
-                            <option value="anthropic" {% if default_provider=='anthropic' %}selected{% endif %}>Anthropic (Claude)</option>
-                            <option value="openai"    {% if default_provider=='openai'    %}selected{% endif %}>OpenAI (GPT-4)</option>
-                            <option value="ollama"    {% if default_provider=='ollama'    %}selected{% endif %}>Ollama (Local)</option>
-                            <option value="deepseek"  {% if default_provider=='deepseek'  %}selected{% endif %}>DeepSeek</option>
-                        </select>
-                        <small id="provider-status" class="provider-status">Using Anthropic API</small>
-                        
-                        <!-- Ollama Model Selection (shown only when Ollama is selected) -->
-                        <div id="ollama-model-section" style="display: none; margin-top: 0.5rem;">
-                            <select id="ollama-model" class="provider-select">
-                                <option value="">Loading models...</option>
-                            </select>
-                            <small class="provider-status">Select your local Ollama model</small>
-                            <button id="test-ollama-btn" class="btn btn-small" style="margin-top: 0.5rem; width: auto;">Test Ollama</button>
-                        </div>
-                    </div>
-                </div>
+                <!-- AI Provider selection removed – DeepSeek is now the sole provider -->
                 
                 <div class="console-section">
                     <h3>Create or Import Content</h3>
@@ -97,7 +76,8 @@
                                 <option value="">-- Common Slide Recipes --</option>
                                 <option value="qbr">QBR (Quarterly Business Review)</option>
                                 <option value="project_update">Project Update</option>
-                                <option value="proposal_overview">Proposal Overview</option>
+                                <option value="consulting_proposal">Consulting Proposal</option>
+                                <option value="qual_mr_report">Qualitative Market Research Report</option>
                             </select>
                             <button id="insert-recipe" class="btn btn-small" style="white-space: nowrap;">Insert Recipe</button>
                         </div>
@@ -105,7 +85,6 @@
                             Inserts a proven template into the input box
                         </small>
                         </div>
-                    <input type="file" id="document-file" accept=".docx,.txt" style="display: none;">
                     <input type="file" id="document-file" accept=".docx,.txt" style="display: none;">
                 </div>
                 

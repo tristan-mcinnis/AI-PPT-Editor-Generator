@@ -2,7 +2,7 @@ import json
 import logging
 from layout_engine import LayoutEngine
 from presentation_engine import PresentationEngine
-from llm_provider import AnthropicProvider
+from llm_provider import DeepSeekProvider
 from pptx import Presentation
 import os
 import pytest
@@ -357,13 +357,16 @@ def test_full_presentation_generation():
     """Test generating a full presentation with layouts."""
     print("\n=== Full Presentation Generation Test ===\n")
     
-    # Skip test if Anthropic API key is not available
-    if not os.getenv('ANTHROPIC_API_KEY'):
-        pytest.skip('Skipping full presentation generation test: ANTHROPIC_API_KEY not set')
+    # Skip test if DeepSeek API key is not available
+    if not os.getenv('DEEPSEEK_API_KEY'):
+        pytest.skip('Skipping full presentation generation test: DEEPSEEK_API_KEY not set')
     
     # Initialize components
     presentation_engine = PresentationEngine()
-    llm_provider = AnthropicProvider()
+    llm_provider = DeepSeekProvider(
+        os.getenv('DEEPSEEK_API_KEY'),
+        os.getenv('DEEPSEEK_MODEL', 'deepseek-chat')
+    )
     
     # Create a test presentation
     test_file = "test_layout_presentation.pptx"

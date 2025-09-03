@@ -72,98 +72,12 @@ def handle_exception(error):
 
 @app.route('/')
 def index():
-    # Pass default LLM provider from environment so the dropdown is pre-selected
-    default_provider = os.environ.get('LLM_PROVIDER', 'deepseek').lower()
-    return render_template('index.html', default_provider=default_provider)
+    # Simplified for DeepSeek-only application
+    return render_template('index.html')
 
 @app.route('/text-helper')
 def text_helper():
     return render_template('text_helper.html')
-
-@app.route('/api/ollama/models', methods=['GET'])
-def get_ollama_models():
-    """Get list of available Ollama models."""
-    try:
-        # Try to connect to Ollama and get model list
-        import requests
-        ollama_host = os.environ.get('OLLAMA_HOST', 'http://localhost:11434')
-        
-        response = requests.get(f"{ollama_host}/api/tags", timeout=5)
-        response.raise_for_status()
-        
-        data = response.json()
-        models = data.get('models', [])
-        
-        # Format the models for the frontend
-        formatted_models = []
-        for model in models:
-            formatted_models.append({
-                'name': model.get('name', ''),
-                'size': model.get('size', 0),
-                'modified_at': model.get('modified_at', '')
-            })
-        
-        return jsonify({
-            'models': formatted_models,
-            'success': True
-        })
-        
-    except requests.exceptions.ConnectionError:
-        return jsonify({
-            'error': 'Cannot connect to Ollama. Make sure Ollama is running.',
-            'models': [],
-            'success': False
-        }), 503
-    except Exception as e:
-        logger.error(f"Error fetching Ollama models: {str(e)}")
-        return jsonify({
-            'error': f'Failed to fetch models: {str(e)}',
-            'models': [],
-            'success': False
-        }), 500
-
-@app.route('/api/ollama/test', methods=['POST'])
-def test_ollama():
-    """Test Ollama connection with a simple request."""
-    try:
-        data = request.json
-        model = data.get('model', 'qwen3:latest')
-        
-        ollama_host = os.environ.get('OLLAMA_HOST', 'http://localhost:11434')
-        
-        logger.info(f"Testing Ollama with model: {model}")
-        
-        test_response = requests.post(
-            f"{ollama_host}/api/generate",
-            json={
-                "model": model,
-                "prompt": "Hello, respond with 'OK'",
-                "stream": False,
-                "options": {
-                    "num_predict": 10
-                }
-            },
-            timeout=30
-        )
-        
-        logger.info(f"Test response status: {test_response.status_code}")
-        test_response.raise_for_status()
-        
-        result = test_response.json()
-        logger.info(f"Test response: {result}")
-        
-        return jsonify({
-            'success': True,
-            'response': result.get('response', ''),
-            'message': 'Ollama is working correctly'
-        })
-        
-    except Exception as e:
-        logger.error(f"Ollama test failed: {str(e)}")
-        return jsonify({
-            'success': False,
-            'error': str(e)
-        }), 500
 
 @app.route('/api/upload/presentation', methods=['POST'])
 def upload_presentation():
@@ -300,7 +214,7 @@ def generate_all_slide_previews(session_id, filepath):
         temp_dir = None
         try:
             # Create unique temporary directory for this session
-            temp_dir = tempfile.mkdtemp(prefix=f"slidespark_{session_id}_")
+            temp_dir = tempfile.mkdtemp(prefix=f"aippteditor_{session_id}_")
             logger.info(f"Created temp directory: {temp_dir}")
             
             # Check if LibreOffice is available
@@ -645,8 +559,6 @@ def edit_presentation(session_id):
     shape_id = data.get('shape_id')
     command = data.get('command')
     context_mode = data.get('context_mode', 'local')
-    provider = data.get('provider', 'anthropic')
-    ollama_model = data.get('ollama_model')
     
     if not shape_id or not command:
         return jsonify({'error': 'Missing required parameters'}), 400
@@ -654,8 +566,8 @@ def edit_presentation(session_id):
     filepath = sessions[session_id]['filepath']
     structure = sessions[session_id]['structure']
     
-    # Get LLM provider with the selected provider and model
-    llm = get_llm_provider(provider, ollama_model)
+    # DeepSeek is the only provider
+    llm = get_llm_provider()
     
     # Perform edit
     engine = PresentationEngine()
@@ -798,21 +710,16 @@ def build_presentation(session_id):
     try:
         data = request.json
         structured_text = data.get('structured_text', '')
-        provider = data.get('provider', 'anthropic')
-        ollama_model = data.get('ollama_model')
         
         logger.info(f"Structured text length: {len(structured_text)}")
         logger.info(f"Structured text preview: {structured_text[:100]}...")
-        logger.info(f"Using provider: {provider}")
-        if ollama_model:
-            logger.info(f"Using Ollama model: {ollama_model}")
         
         if not structured_text:
             logger.error("No structured text provided")
             return jsonify({'error': 'No structured text provided'}), 400
         
-        # Get LLM provider with the selected provider and model
-        llm = get_llm_provider(provider, ollama_model)
+        # DeepSeek is the only provider
+        llm = get_llm_provider()
         
         # Use presentation engine to build from structured text
         engine = PresentationEngine()
