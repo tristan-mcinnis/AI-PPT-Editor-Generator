@@ -79,6 +79,48 @@ def index():
 def text_helper():
     return render_template('text_helper.html')
 
+# ---------------------------------------------------------------------------
+# Session helpers
+# ---------------------------------------------------------------------------
+
+# Create a blank session with an untitled PPTX so first-run “Build” works
+@app.route('/api/session/create', methods=['POST'])
+def create_session():
+    """
+    Create a brand-new session backed by a blank presentation file.
+    Used by the front-end when the user clicks “Build from Text” with no
+    existing deck.
+    """
+    try:
+        session_id = str(uuid.uuid4())
+        filename = 'untitled.pptx'
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], f"{session_id}_{filename}")
+
+        # Create a blank presentation on disk
+        from pptx import Presentation
+        prs = Presentation()
+        prs.save(filepath)
+
+        # Parse the (empty) presentation to return a valid structure
+        engine = PresentationEngine()
+        structure = engine.parse_presentation(filepath)
+
+        sessions[session_id] = {
+            'filepath': filepath,
+            'structure': structure,
+            'filename': filename
+        }
+
+        logger.info(f"Created new blank session: {session_id}")
+
+        return jsonify({
+            'session_id': session_id,
+            'structure': structure
+        })
+    except Exception as e:
+        logger.error(f"Failed to create session: {e}")
+        return jsonify({'error': 'Failed to create session'}), 500
+
 @app.route('/api/upload/presentation', methods=['POST'])
 def upload_presentation():
     try:

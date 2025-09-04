@@ -8,14 +8,20 @@
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 </head>
 <body>
-    <div class="app-container">
+    <div id="app" class="app-container">
         <!-- Panel 1: Structure Explorer -->
         <div class="panel structure-explorer">
             <div class="panel-header">
                 <h2>1. Structure Explorer</h2>
             </div>
             <div class="panel-content">
-                <div class="console-section">
+                <!-- Empty-state overlay (hidden by default) -->
+                <div id="structure-empty-overlay" class="empty-overlay" style="display:none;">
+                    <div style="font-size:2rem;">📂</div>
+                    <div class="title">No presentation yet</div>
+                    <div class="hint">Upload a .pptx or click Build to create one</div>
+                </div>
+                <div id="section-create-import" class="console-section">
                     <h3>Start Here</h3>
                     <button id="upload-presentation-btn" class="btn btn-primary">
                         📂 Upload Presentation (.pptx)
@@ -70,7 +76,7 @@
                     </div>
 
                     <!-- Common Slide Recipes -->
-                    <div class="button-group" style="margin-top: 0.75rem;">
+                    <div id="recipe-group" class="button-group" style="margin-top: 0.75rem;">
                         <div class="button-item" style="display: flex; align-items: center;">
                             <select id="recipe-select" class="provider-select" style="flex: 1; margin-right: 0.5rem;">
                                 <option value="">-- Common Slide Recipes --</option>
@@ -80,11 +86,12 @@
                                 <option value="qual_mr_report">Qualitative Market Research Report</option>
                             </select>
                             <button id="insert-recipe" class="btn btn-small" style="white-space: nowrap;">Insert Recipe</button>
+                            <button id="insert-sample" class="btn btn-small" style="white-space: nowrap; margin-left: 0.5rem;">Insert Sample</button>
                         </div>
                         <small style="display:block; margin-top:0.25rem; color:#6c757d;">
                             Inserts a proven template into the input box
                         </small>
-                        </div>
+                    </div>
                     <input type="file" id="document-file" accept=".docx,.txt" style="display: none;">
                 </div>
                 
@@ -106,13 +113,13 @@
                 </div>
                 
                 <!-- Console Output Section -->
-                <div class="console-section">
+                <div id="section-activity-log" class="console-section">
                     <h3>Activity Log</h3>
                     <div id="console-output" class="console-output"></div>
                 </div>
                 
                 <!-- Command Input Section -->
-                <div class="console-section">
+                <div id="section-command-input" class="console-section">
                     <h3 id="command-section-title">Command Input</h3>
                     <div class="console-input">
                         <textarea 
@@ -124,6 +131,9 @@
                         <div class="console-buttons">
                             <button id="execute-command" class="btn btn-primary" disabled>Execute</button>
                             <button id="toggle-input-size" class="btn btn-small">Expand</button>
+                        </div>
+                        <div id="selection-hint" class="selection-hint">
+                            Select a shape in the Structure Explorer to enable editing.
                         </div>
                         <div id="mode-indicator" style="font-size: 0.75rem; color: #6c757d; margin-top: 0.5rem; display: none;">
                             <!-- Mode indicator will be shown here -->
@@ -144,6 +154,12 @@
                 </div>
             </div>
             <div class="panel-content">
+                <!-- Empty-state overlay (hidden by default) -->
+                <div id="preview-empty-overlay" class="empty-overlay" style="display:none;">
+                    <div style="font-size:2rem;">🖼️</div>
+                    <div class="title">No slide to preview</div>
+                    <div class="hint">Build to render slides</div>
+                </div>
                 <div id="slide-preview" class="slide-preview">
                     <p class="placeholder">No slide to preview</p>
                 </div>
