@@ -53,6 +53,8 @@ body {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    /* allow absolute-positioned empty-state overlays */
+    position: relative;
 }
 
 /* Console Sections */
@@ -409,4 +411,74 @@ body {
         flex: initial;
         height: 33.33vh;
     }
+}
+
+/* ---------------------------------------------------------------------------
+   Empty-state overlays & first-run emphasis
+--------------------------------------------------------------------------- */
+
+.empty-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background: linear-gradient(180deg, rgba(250, 251, 252, 0.9), rgba(250, 251, 252, 0.95));
+    color: #6c757d;
+    text-align: center;
+    padding: 1.5rem;
+    z-index: 2;
+}
+
+.empty-overlay .title {
+    font-weight: 600;
+    color: #495057;
+}
+
+.empty-overlay .hint {
+    font-size: 0.875rem;
+}
+
+/* First-run visibility rules */
+.first-run .command-console .console-section {
+    display: none;
+}
+
+.first-run #section-create-import {
+    display: block;
+}
+
+.first-run #ingest-document-btn,
+.first-run #recipe-group {
+    display: none;
+}
+
+.first-run:not(.in-build) #section-command-input {
+    display: none;
+}
+
+.first-run #section-activity-log {
+    display: none;
+}
+
+.first-run .structure-explorer .tree-view {
+    filter: blur(1px);
+}
+
+.first-run .visual-preview .slide-preview {
+    filter: blur(1px);
+}
+
+/* Selection affordance note */
+.selection-hint {
+    font-size: 0.8rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+    display: none;
+}
+
+.selection-hint.visible {
+    display: block;
 }

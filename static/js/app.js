@@ -6,6 +6,19 @@ let currentSlideIndex = 0;
 let isExpanded = false;
 let buildMode = false;
 
+// Sample minimal content for new users
+const SAMPLE_MINIMAL = `## Slide 1
+**Executive Summary**
+- What we did
+- What we found
+- What it means
+
+## Slide 2
+**Next Steps**
+- Action 1
+- Action 2
+- Owner & timeline`;
+
 // ---------------------------------------------------------------------------
 // Common slide recipes (id -> { name, text })
 // ---------------------------------------------------------------------------
@@ -128,6 +141,7 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, initializing application...');
 
     // DOM elements
+    const appRoot = document.getElementById('app');
     const uploadPresentationBtn = document.getElementById('upload-presentation-btn');
     const presentationFileInput = document.getElementById('presentation-file');
     const ingestDocumentBtn = document.getElementById('ingest-document-btn');
@@ -151,6 +165,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Recipe elements
     const recipeSelect = document.getElementById('recipe-select');
     const insertRecipeBtn = document.getElementById('insert-recipe');
+    // New elements
+    const structureEmptyOverlay = document.getElementById('structure-empty-overlay');
+    const previewEmptyOverlay = document.getElementById('preview-empty-overlay');
+    const selectionHint = document.getElementById('selection-hint');
+    const insertSampleBtn = document.getElementById('insert-sample');
 
     // Check if critical elements exist
     console.log('Build button found:', !!buildPresentationBtn);
@@ -206,8 +225,24 @@ document.addEventListener('DOMContentLoaded', function() {
         if (insertRecipeBtn) {
             insertRecipeBtn.addEventListener('click', handleInsertRecipe);
         }
+        // Insert sample handler
+        if (insertSampleBtn) {
+            insertSampleBtn.addEventListener('click', handleInsertSample);
+        }
     } catch (error) {
         console.error('Error setting up event listeners:', error);
+    }
+
+    // ------------------------------------------------------------------
+    // First-run UI management
+    // ------------------------------------------------------------------
+    function updateFirstRunUI() {
+        const hasDeck = !!(currentSession && currentStructure && Array.isArray(currentStructure.slides));
+        appRoot.classList.toggle('first-run', !hasDeck);
+        appRoot.classList.toggle('in-build', buildMode);
+        if (structureEmptyOverlay) structureEmptyOverlay.style.display = hasDeck ? 'none' : 'flex';
+        const hasSlides = hasDeck && currentStructure.slides.length > 0;
+        if (previewEmptyOverlay) previewEmptyOverlay.style.display = hasSlides ? 'none' : 'flex';
     }
 
     // ------------------------------------------------------------------
@@ -231,6 +266,43 @@ document.addEventListener('DOMContentLoaded', function() {
         commandInput.value = recipe.text.trim();
         commandInput.focus();
         addConsoleMessage(`📋 Inserted "${recipe.name}" template. Edit as needed then click 🚀 Execute Build`, 'info');
+    }
+
+    // ------------------------------------------------------------------
+    // Sample insertion logic
+    // ------------------------------------------------------------------
+    function handleInsertSample() {
+        if (!buildMode) toggleBuildMode();
+        if (!currentSession) {
+            // will be created inside toggleBuildMode path below
+        }
+        commandInput.value = SAMPLE_MINIMAL.trim();
+        commandInput.focus();
+        addConsoleMessage('📋 Inserted minimal 2-slide sample. Edit then click 🚀 Execute Build', 'info');
+    }
+
+    // ------------------------------------------------------------------
+    // Create blank session for first-run
+    // ------------------------------------------------------------------
+    async function createBlankSession() {
+        try {
+            showLoading();
+            const resp = await fetch('/api/session/create', { method: 'POST' });
+            if (!resp.ok) throw new Error('Failed to create session');
+            const data = await resp.json();
+            currentSession = data.session_id;
+            currentStructure = data.structure;
+            renderStructureTree();
+            updateSlidePreview();
+            addConsoleMessage('🆕 Created a new blank presentation. You can now build from text.', 'info');
+            updateFirstRunUI();
+            return true;
+        } catch (e) {
+            addConsoleMessage('❌ Could not create a new session: ' + e.message, 'error');
+            return false;
+        } finally {
+            hideLoading();
+        }
     }
 
     // Handle presentation upload
@@ -280,6 +352,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Show edit mode settings when there's content to edit
                 editModeSection.style.display = 'block';
             }
+            
+            updateFirstRunUI();
         } catch (error) {
             console.error('Upload error:', error);
             addConsoleMessage('❌ Error: ' + error.message, 'error');
@@ -344,6 +418,7 @@ document.addEventListener('DOMContentLoaded', function() {
             updateSlidePreview();
             
             addConsoleMessage('Presentation created successfully!');
+            updateFirstRunUI();
         } catch (error) {
             addConsoleMessage('Error: ' + error.message, 'error');
         } finally {
@@ -452,7 +527,13 @@ document.addEventListener('DOMContentLoaded', function() {
             commandInput.placeholder = 'Enter your edit command for the selected shape...';
             addConsoleMessage(`✅ Shape selected: ${node.textContent.trim()}`, 'info');
             addConsoleMessage('💡 Now you can type edit commands in the text box below', 'info');
+            
+            // Hide selection hint when shape is selected
+            if (selectionHint) selectionHint.classList.toggle('visible', false);
         }
+        
+        // Show selection hint if no shape is selected and not in build mode
+        if (selectionHint) selectionHint.classList.toggle('visible', !buildMode && !selectedShape);
     }
 
     // Update slide preview
@@ -503,6 +584,11 @@ document.addEventListener('DOMContentLoaded', function() {
     function enableConsole() {
         commandInput.disabled = false;
         executeCommand.disabled = false;
+        
+        // Show selection hint when enabling console but no shape is selected
+        if (selectionHint && !buildMode && !selectedShape) {
+            selectionHint.classList.toggle('visible', true);
+        }
     }
 
     // Loading states
@@ -530,62 +616,14 @@ document.addEventListener('DOMContentLoaded', function() {
         if (buildMode) {
             // Enter build mode
             if (!currentSession) {
-                addConsoleMessage('❌ Please upload a presentation first', 'error');
-                buildMode = false;
+                createBlankSession().then((ok) => {
+                    if (!ok) { buildMode = false; return; }
+                    enterBuildModeUI();
+                });
                 return;
             }
             
-            // Update UI for build mode
-            commandInput.placeholder = 'Paste your structured presentation content here (e.g., ## Slide 1...)';
-            commandInput.disabled = false;
-            commandInput.style.backgroundColor = '#fffbf0';
-            commandInput.style.border = '2px solid #ff9800';
-            executeCommand.textContent = '🚀 Execute Build';
-            executeCommand.disabled = false;
-            executeCommand.classList.add('btn-warning');
-            buildPresentationBtn.textContent = '❌ Cancel Build Mode';
-            buildPresentationBtn.classList.remove('btn-secondary');
-            buildPresentationBtn.classList.add('btn-danger');
-            
-            // Hide edit mode settings in build mode
-            editModeSection.style.display = 'none';
-            
-            // Update section title and indicator
-            commandSectionTitle.textContent = 'Build Mode - Paste Content';
-            modeIndicator.style.display = 'block';
-            modeIndicator.innerHTML = '🏗️ <strong>BUILD MODE:</strong> Paste your structured text below and click "Execute Build"';
-            
-            // Automatically expand the input
-            if (!isExpanded) {
-                toggleInputExpanded();
-            }
-            
-            // Clear any existing content
-            commandInput.value = '';
-            commandInput.focus();
-            
-            // Force scroll the command input into view
-            commandInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            
-            // Also scroll the console output to show recent messages
-            consoleOutput.scrollTop = consoleOutput.scrollHeight;
-            
-            // Add clear instructions
-            addConsoleMessage('🏗️ BUILD MODE ACTIVATED!', 'info');
-            addConsoleMessage('📝 Instructions:', 'info');
-            addConsoleMessage('1. Paste your structured text in the expanded box below', 'info');
-            addConsoleMessage('2. Use ## Slide X for slide markers', 'info');
-            addConsoleMessage('3. Use **text** for titles and bold content', 'info');
-            addConsoleMessage('4. Click "🚀 Build Presentation" when ready', 'info');
-            addConsoleMessage('', 'info');
-            addConsoleMessage('Example format:', 'info');
-            addConsoleMessage('## Slide 1', 'info');
-            addConsoleMessage('**Your Title Here**', 'info');
-            addConsoleMessage('- Bullet point 1', 'info');
-            addConsoleMessage('- Bullet point 2', 'info');
-            
-            // Scroll to bottom of console
-            consoleOutput.scrollTop = consoleOutput.scrollHeight;
+            enterBuildModeUI();
         } else {
             // Exit build mode
             commandInput.placeholder = 'Select a shape first, then enter your command here...';
@@ -613,10 +651,74 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!selectedShape) {
                 commandInput.disabled = true;
                 executeCommand.disabled = true;
+                
+                // Show selection hint when exiting build mode with no shape selected
+                if (selectionHint) selectionHint.classList.toggle('visible', true);
             }
             
             addConsoleMessage('ℹ️ Build mode cancelled', 'info');
+            updateFirstRunUI();
         }
+    }
+    
+    // Enter build mode UI updates
+    function enterBuildModeUI() {
+        // Prefill with sample if empty
+        commandInput.value = commandInput.value || SAMPLE_MINIMAL.trim();
+        
+        // Update UI for build mode
+        commandInput.placeholder = 'Paste your structured presentation content here (e.g., ## Slide 1...)';
+        commandInput.disabled = false;
+        commandInput.style.backgroundColor = '#fffbf0';
+        commandInput.style.border = '2px solid #ff9800';
+        executeCommand.textContent = '🚀 Execute Build';
+        executeCommand.disabled = false;
+        executeCommand.classList.add('btn-warning');
+        buildPresentationBtn.textContent = '❌ Cancel Build Mode';
+        buildPresentationBtn.classList.remove('btn-secondary');
+        buildPresentationBtn.classList.add('btn-danger');
+        
+        // Hide edit mode settings in build mode
+        editModeSection.style.display = 'none';
+        
+        // Update section title and indicator
+        commandSectionTitle.textContent = 'Build Mode - Paste Content';
+        modeIndicator.style.display = 'block';
+        modeIndicator.innerHTML = '🏗️ <strong>BUILD MODE:</strong> Paste your structured text below and click "Execute Build"';
+        
+        // Automatically expand the input
+        if (!isExpanded) {
+            toggleInputExpanded();
+        }
+        
+        // Focus the input
+        commandInput.focus();
+        
+        // Force scroll the command input into view
+        commandInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Also scroll the console output to show recent messages
+        consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        
+        // Add clear instructions
+        addConsoleMessage('🏗️ BUILD MODE ACTIVATED!', 'info');
+        addConsoleMessage('📝 Instructions:', 'info');
+        addConsoleMessage('1. Paste your structured text in the expanded box below', 'info');
+        addConsoleMessage('2. Use ## Slide X for slide markers', 'info');
+        addConsoleMessage('3. Use **text** for titles and bold content', 'info');
+        addConsoleMessage('4. Click "🚀 Build Presentation" when ready', 'info');
+        addConsoleMessage('', 'info');
+        addConsoleMessage('Example format:', 'info');
+        addConsoleMessage('## Slide 1', 'info');
+        addConsoleMessage('**Your Title Here**', 'info');
+        addConsoleMessage('- Bullet point 1', 'info');
+        addConsoleMessage('- Bullet point 2', 'info');
+        
+        // Scroll to bottom of console
+        consoleOutput.scrollTop = consoleOutput.scrollHeight;
+        
+        // Update first-run UI
+        updateFirstRunUI();
     }
 
     // Modified execute command to handle both modes
@@ -681,6 +783,7 @@ document.addEventListener('DOMContentLoaded', function() {
             buildMode = true; // Set to true so toggleBuildMode will switch it to false
             toggleBuildMode();
             
+            updateFirstRunUI();
         } catch (error) {
             console.error('Build error:', error);
             addConsoleMessage('❌ Error: ' + error.message, 'error');
@@ -859,5 +962,8 @@ document.addEventListener('DOMContentLoaded', function() {
             exportPdfBtn.disabled = false;
         }
     }
+
+    // Initialize first-run UI state
+    updateFirstRunUI();
 
 }); // End of DOMContentLoaded
